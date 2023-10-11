@@ -3,9 +3,9 @@
     "version": "1.0.0",
     "description": "",
     "main": "app.js",
-    "type": "module",
     "scripts": {
-        "dev": "vite"
+        "dev": "vite",
+        "start": "nodemon -x ts-node src/app.ts"
     },
     "repository": {
         "type": "git",
@@ -29,6 +29,8 @@
         "mongoose": "^7.0.3",
         "mongoose-paginate-v2": "^1.7.1",
         "vite": "^4.1.4",
-        "vite-plugin-node": "^3.0.2"
+        "vite-plugin-node": "^3.0.2",
+        "nodemon": "^3.0.1",
+        "ts-node": "^10.9.1"
     }
 }
