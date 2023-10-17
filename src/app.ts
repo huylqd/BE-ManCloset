@@ -1,15 +1,31 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-
+import categoryRouter from "./routers/category";
+import dotenv from "dotenv";
 const app: any = express();
-
-app.use(express.json());
+dotenv.config();
 app.use(cors());
-
-mongoose.connect(`mongodb://localhost:27017/test-node`);
+app.use(express.json());
+app.use("/", categoryRouter);
 
 const port = 8088;
+const mongoUrl = process.env.MONGODB_URL;
+mongoose.connect(
+  `mongodb://admin:123zXc_@27.118.27.251:27017?authMechanism=DEFAULT`,
+  {
+    dbName: "datn",
+    autoCreate: true,
+  }
+);
+
+const db = mongoose.connection;
+
+// Set up event listeners for the connection
+db.on("error", (error) => {
+  console.error("MongoDB connection error:", error);
+});
+
 app.listen(port, () => {
   console.log(`App is running at the ${port}`);
 });
