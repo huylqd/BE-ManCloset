@@ -1,8 +1,10 @@
 import Category from "../model/category";
 import { categorySchema } from "../schema/categorySchema";
 
-export const createCategory = async (req, res) => {
+export const createCategory = async (req: any, res: any) => {
   try {
+    res.setHeader("Content-Type", "application/json");
+
     const { error } = categorySchema.validate(req.body);
     if (error) {
       console.log("error", error);
@@ -32,7 +34,7 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategory = async (req: any, res: any) => {
   try {
-    // res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json");
     const category = await Category.find({});
     // console.log("category:", category);
     if (category.length === 0) {
@@ -53,7 +55,7 @@ export const getAllCategory = async (req: any, res: any) => {
 
 export const getCategoryById = async (req: any, res: any) => {
   try {
-    // res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json");
     const { id } = req.params;
     const category = await Category.findById(id);
     // console.log("category:", category);
@@ -74,7 +76,7 @@ export const getCategoryById = async (req: any, res: any) => {
 };
 export const updateCategory = async (req: any, res: any) => {
   try {
-    // res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", "application/json");
     const { error } = categorySchema.validate(req.body);
     if (error) {
       console.log("error", error);
@@ -104,19 +106,19 @@ export const updateCategory = async (req: any, res: any) => {
 };
 export const removeCategory = async (req: any, res: any) => {
   try {
-    // res.setHeader("Content-Type", "application/json");
-
+    res.setHeader("Content-Type", "application/json");
     const { id } = req.params;
-    const category = await Category.findByIdAndDelete(id);
-    // console.log("category:", category);
+    const category = await Category.findById(id);
     if (!category) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "Category not found",
       });
     }
-    res.status(200).json({
+
+    const removedCategory = await Category.findByIdAndDelete(id);
+    res.status(201).json({
       message: "Category remove successfully",
-      data: category,
+      data: removedCategory,
     });
   } catch (error) {
     return res.status(500).json({
