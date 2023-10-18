@@ -2,22 +2,21 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import categoryRouter from "./routers/category";
+import couponRouter from "./routers/coupon";
 import dotenv from "dotenv";
 const app: any = express();
 dotenv.config();
 app.use(cors());
 app.use(express.json());
-app.use("/", categoryRouter);
+app.use("/api/category", categoryRouter);
+app.use("/api/coupon", couponRouter);
 
 const port = 8088;
 const mongoUrl = process.env.MONGODB_URL;
-mongoose.connect(
-  `mongodb://admin:123zXc_@27.118.27.251:27017?authMechanism=DEFAULT`,
-  {
-    dbName: "datn",
-    autoCreate: true,
-  }
-);
+mongoose.connect(mongoUrl, {
+  dbName: "datn",
+  autoCreate: true,
+});
 
 const db = mongoose.connection;
 
