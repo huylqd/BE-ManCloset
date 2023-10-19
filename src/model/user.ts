@@ -24,4 +24,5 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     default: "Local",
   },
 });
+
 export default mongoose.model("User", userSchema);
