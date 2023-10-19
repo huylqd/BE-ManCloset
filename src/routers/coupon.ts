@@ -9,10 +9,10 @@ import {
 
 const router = express.Router();
 
-router.get("", getAllCoupon);
-router.post("", createCoupon);
-router.get("/:id", getCouponById);
-router.delete("/:id", deleteCoupon);
-router.put("/:id", updateCoupon);
+router.get("/coupon", getAllCoupon);
+router.post("/coupon", createCoupon);
+router.get("/coupon/:id", getCouponById);
+router.delete("/coupon/:id", deleteCoupon);
+router.put("/coupon/:id", updateCoupon);
 
 export default router;

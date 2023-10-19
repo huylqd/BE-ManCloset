@@ -3,13 +3,15 @@ import mongoose from "mongoose";
 import cors from "cors";
 import categoryRouter from "./routers/category";
 import couponRouter from "./routers/coupon";
+import productRouter from "./routers/product";
 import dotenv from "dotenv";
 const app: any = express();
 dotenv.config();
 app.use(cors());
 app.use(express.json());
-app.use("/api/category", categoryRouter);
-app.use("/api/coupon", couponRouter);
+app.use("/api", categoryRouter);
+app.use("/api", couponRouter);
+app.use("/api", productRouter);
 
 const port = 8088;
 const mongoUrl = process.env.MONGODB_URL;
