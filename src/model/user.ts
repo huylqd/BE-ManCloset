@@ -2,11 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { IUser } from "../interface/user";
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
-  firstName: {
-    type: Schema.Types.String,
-    maxLength: 255,
-  },
-  lastName: {
+  name: {
     type: Schema.Types.String,
     maxLength: 255,
   },
@@ -17,11 +13,15 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
   password: {
     type: String,
+    require: true,
   },
-  authType: {
+  confirmPassword: {
     type: String,
-    enum: ["Google", "Facebook", "Defix", "Local"],
-    default: "Local",
+    require: true,
+  },
+  role: {
+    type: String,
+    default: "member"
   },
 });
 export default mongoose.model("User", userSchema);
