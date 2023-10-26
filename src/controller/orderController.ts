@@ -1,8 +1,9 @@
 import { orderSchema } from "../schema/orderSchema";
 import Bill from "../model/order";
+import { Request, Response } from "express";
 import User from "../model/user";
 
-export const getAllBill = async (req, res) => {
+export const getAllBill = async (req: Request, res: Response) => {
   try {
     const bills = await Bill.find();
     if (bills.length === 0) {
@@ -16,6 +17,26 @@ export const getAllBill = async (req, res) => {
     });
   } catch (error) {
     return res.status(404).json({
+      message: error,
+    });
+  }
+};
+
+export const billHistoryById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const billById = await Bill.findById(id);
+    if (!billById) {
+      return res.status(404).json({
+        message: "không tìm thấy đơn hàng của bạn kiểm tra lại",
+      });
+    }
+    return res.json(200).json({
+      message: "Lịch sử đặt hàng của bạn",
+      data: billById,
+    });
+  } catch (error) {
+    return res.status(500).json({
       message: error,
     });
   }
@@ -40,7 +61,7 @@ export const getAllBill = async (req, res) => {
     "total_price":40000
     }
 */
-export const createBill = async (req, res) => {
+export const createBill = async (req: Request, res: Response) => {
   try {
     const { error } = orderSchema.validate(req.body);
     if (error) {
@@ -67,7 +88,7 @@ export const createBill = async (req, res) => {
   }
 };
 //Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
-export const updateBill = async (req, res) => {
+export const updateBill = async (req: Request, res: Response) => {
   try {
     const bill = await Bill.findByIdAndUpdate(req.params.id, req.body, {
       new: true,

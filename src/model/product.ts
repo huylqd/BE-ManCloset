@@ -5,6 +5,24 @@ import { IProduct } from "../interface/product";
 
 const plugins = [paginate, mongooseDelete];
 
+const propertySchema = new mongoose.Schema(
+  {
+    imageUrl: {
+      type: String,
+    },
+    color: {
+      type: String,
+    },
+    quantity: {
+      type: Number,
+    },
+    size: {
+      type: String,
+    },
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema<IProduct>(
   {
     productName: {
@@ -19,22 +37,7 @@ const productSchema = new mongoose.Schema<IProduct>(
     description: {
       type: String,
     },
-    properties: [
-      {
-        imageUrl: {
-          type: String,
-        },
-        color: {
-          type: String,
-        },
-        quantity: {
-          type: Number,
-        },
-        size: {
-          type: String,
-        },
-      },
-    ],
+    properties: [propertySchema],
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Categories",

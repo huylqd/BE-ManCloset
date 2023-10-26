@@ -3,7 +3,10 @@ import { IOrder, OrderStatus } from "../interface/order";
 
 const itemSchema = new mongoose.Schema(
   {
-    product_id: String,
+    product_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "Products",
+    },
     price: Number,
     property: {
       quantity: Number,
