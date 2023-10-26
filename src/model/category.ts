@@ -7,6 +7,7 @@ const categorySchema: Schema<ICate> = new Schema(
       type: Schema.Types.String,
       maxLength: 255,
     },
+    products: [{ type: mongoose.Types.ObjectId, ref: "Product" }],
   },
   { timestamps: true, versionKey: false }
 );
