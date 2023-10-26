@@ -13,6 +13,7 @@ app.use(express.json());
 app.use("/api", categoryRouter);
 app.use("/api", couponRouter);
 app.use("/api", productRouter);
+app.use("/api", cartRouter);
 const port = 8088;
 const mongoUrl = process.env.MONGODB_URL;
 mongoose.connect(mongoUrl, {

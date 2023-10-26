@@ -61,6 +61,29 @@ export const billHistoryById = async (req: Request, res: Response) => {
   }
 };
 
+export const billHistoryByUserId = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.userId;
+    const bill = await Bill.find({ user_id: id }).sort({
+      createAt: -1,
+    });
+
+    if (!bill) {
+      return res.status(404).json({
+        message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
+      });
+    }
+    return res.status(200).json({
+      message: "Đơn hàng của bạn đây",
+      data: bill,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+    });
+  }
+};
+
 export const createBill = async (req: Request, res: Response) => {
   try {
     const { error } = orderSchema.validate(req.body);
@@ -87,6 +110,7 @@ export const createBill = async (req: Request, res: Response) => {
     });
   }
 };
+
 //Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
 export const updateBill = async (req: Request, res: Response) => {
   try {
