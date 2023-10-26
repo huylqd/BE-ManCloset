@@ -20,6 +20,26 @@ export const getAllBill = async (req, res) => {
     });
   }
 };
+
+/* Postman create a new bill : req.body
+    {
+    "user_id":"65314ba0d0253dbb606a1c4e",
+    "shipping_address":"Ninh Bình",
+    "items":[
+        {
+            "product_id":"6530d9f81dfde459a5fd287a",
+            "price": 20000,
+            "property":{
+                "quantity":2,
+                "color":"vàng",
+                "size":"M"
+            },
+            "sub_total":40000
+        }
+    ],
+    "total_price":40000
+    }
+*/
 export const createBill = async (req, res) => {
   try {
     const { error } = orderSchema.validate(req.body);
@@ -46,7 +66,7 @@ export const createBill = async (req, res) => {
     });
   }
 };
-//Chỉ gửi lên status
+//Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
 export const updateBill = async (req, res) => {
   try {
     const bill = await Bill.findByIdAndUpdate(req.params.id, req.body, {
