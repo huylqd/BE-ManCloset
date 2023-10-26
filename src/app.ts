@@ -6,6 +6,7 @@ import couponRouter from "./routers/coupon";
 import productRouter from "./routers/product";
 import VnPayRouter from "./routers/VnPay"
 import dotenv from "dotenv";
+import UserRouter from "./routers/auth"
 const app: any = express();
 dotenv.config();
 app.use(cors());
@@ -14,6 +15,8 @@ app.use("/api", categoryRouter);
 app.use("/api", couponRouter);
 app.use("/api", productRouter);
 app.use("/order", VnPayRouter);
+
+app.use('/', UserRouter)
 
 const port = 8088;
 const mongoUrl = process.env.MONGODB_URL;

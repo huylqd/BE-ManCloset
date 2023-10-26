@@ -19,6 +19,7 @@
     },
     "homepage": "https://github.com/datlt2306/web503#readme",
     "dependencies": {
+        "axios": "^1.5.1",
         "bcryptjs": "^2.4.3",
         "concurrently": "^7.6.0",
         "cors": "^2.8.5",

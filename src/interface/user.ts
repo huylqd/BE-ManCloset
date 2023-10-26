@@ -2,11 +2,13 @@ import { Request } from "express";
 
 export interface IUser {
   _id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   password: string;
-  authType: "Google" | "Facebook" | "Defix" | "Local";
+  confirmPassword: string;
+  address: string | undefined;
+  phone: number | undefined;
+  role: string;
 }
 
 export interface IRequestWithUser extends Request {
