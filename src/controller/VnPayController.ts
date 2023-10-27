@@ -1,9 +1,11 @@
 import dotenv from "dotenv";
 import moment = require("moment");
+import { createBill, updateBill } from "./orderController";
+import order from "../model/order";
 
 dotenv.config();
 
-export const create_payment_url = (req, res) => {
+export const create_payment_url = async (req, res) => {
     let date = new Date();
     let createDate = moment(date).format('YYYYMMDDHHmmss');
     
@@ -21,8 +23,14 @@ export const create_payment_url = (req, res) => {
     let orderId = moment(date).format('DDHHmmss');
     let amount = req.body.amount;
     let bankCode = req.body.bankCode;
-    
-    let locale = req.body.language;
+    const data = {
+         user_id : req.body.user_id,
+         shipping_address : req.body.shipping_address,
+         items : req.body.items,
+         total_price : req.body.amount,
+         id_transaction : String(orderId)
+    }
+    let locale = req.body.language
     if(locale === null || locale === ''){
         locale = 'vn';
     }
@@ -51,13 +59,16 @@ export const create_payment_url = (req, res) => {
     let crypto = require("crypto");     
     let hmac = crypto.createHmac("sha512", secretKey);
     let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex"); 
+    const createBill = new order(data)
+    createBill.save()
+
     vnp_Params['vnp_SecureHash'] = signed;
     vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
     res.status(200).json(vnpUrl)
     res.end()
 }
 
-export const vnPay_return = (req, res) => {
+export const vnPay_return = async (req, res) => {
     let vnp_Params = req.query;
 
     let secureHash = vnp_Params['vnp_SecureHash'];
@@ -77,17 +88,18 @@ export const vnPay_return = (req, res) => {
     let signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");     
 
     if(secureHash === signed){
-        //Kiem tra xem du lieu trong db co hop le hay khong va thong bao ket qua
-        // res.redirect('http://localhost:3000')
         if(vnp_Params['vnp_ResponseCode'] === '00') {
-            console.log('sucesss'), 
+            console.log('sucesss')
+            const updateBill = await order.updateOne(
+                {id_transaction : String(vnp_Params['vnp_TxnRef'])},
+                {$set: { "history_order_status.0.status" : "Đã thanh toán"}}
+            )
             res.redirect('http://localhost:3000/paypage')
-            return
         }
-        res.status(200).json({
-            message: 'successful',
-            code: vnp_Params['vnp_ResponseCode']
-        })
+        // res.status(200).json({
+        //     message: 'successful',
+        //     code: vnp_Params['vnp_ResponseCode']
+        // })
     } else{
         res.status(200).json({
             message: 'success',

@@ -1,4 +1,3 @@
-import axios from "axios";
 import User from "../model/user";
 import { signUpSchema, signInSchema } from "../schema/userSchema";
 import bcrypt from 'bcryptjs';

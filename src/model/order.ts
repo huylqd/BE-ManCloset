@@ -63,6 +63,10 @@ const orderSchema: Schema<IOrder> = new Schema(
       required: true,
       min: 0,
     },
+    id_transaction: {
+      type: String,
+      default: null
+    },
   },
   { timestamps: true, versionKey: false }
 );
