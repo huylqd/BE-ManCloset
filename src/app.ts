@@ -5,6 +5,7 @@ import categoryRouter from "./routers/category";
 import couponRouter from "./routers/coupon";
 import productRouter from "./routers/product";
 import VnPayRouter from "./routers/VnPay";
+import orderRouter from "./routers/order";
 import dotenv from "dotenv";
 import UserRouter from "./routers/auth";
 
@@ -19,6 +20,7 @@ app.use("/api", categoryRouter);
 app.use("/api", couponRouter);
 app.use("/api", productRouter);
 app.use("/order", VnPayRouter);
+app.use("/", orderRouter);
 
 app.use("/", UserRouter);
 
