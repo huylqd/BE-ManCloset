@@ -1,7 +1,7 @@
 import { orderSchema } from "../schema/orderSchema";
 import Bill from "../model/order";
-import User from "../model/user";
 import { Request, Response } from "express";
+import User from "../model/user";
 export const getAllBill = async (req: Request, res: Response) => {
   try {
     const bills = await Bill.find();
@@ -16,6 +16,26 @@ export const getAllBill = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(404).json({
+      message: error,
+    });
+  }
+};
+
+export const billHistoryById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const billById = await Bill.findById(id);
+    if (!billById) {
+      return res.status(404).json({
+        message: "không tìm thấy đơn hàng của bạn kiểm tra lại",
+      });
+    }
+    return res.json(200).json({
+      message: "Lịch sử đặt hàng của bạn",
+      data: billById,
+    });
+  } catch (error) {
+    return res.status(500).json({
       message: error,
     });
   }
@@ -40,26 +60,6 @@ export const getAllBill = async (req: Request, res: Response) => {
     "total_price":40000
     }
 */
-
-export const billHistoryById = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-    const billById = await Bill.findById(id);
-    if (!billById) {
-      return res.status(404).json({
-        message: "không tìm thấy đơn hàng của bạn kiểm tra lại",
-      });
-    }
-    return res.json(200).json({
-      message: "Lịch sử đặt hàng của bạn",
-      data: billById,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: error,
-    });
-  }
-};
 
 export const billHistoryByUserId = async (req: Request, res: Response) => {
   try {
