@@ -22,26 +22,6 @@ export const getAllBill = async (req: Request, res: Response) => {
   }
 };
 
-export const billHistoryById = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-    const billById = await Bill.findById(id);
-    if (!billById) {
-      return res.status(404).json({
-        message: "không tìm thấy đơn hàng của bạn kiểm tra lại",
-      });
-    }
-    return res.json(200).json({
-      message: "Lịch sử đặt hàng của bạn",
-      data: billById,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: error,
-    });
-  }
-};
-
 /* Postman create a new bill : req.body
     {
     "user_id":"65314ba0d0253dbb606a1c4e",

@@ -8,6 +8,7 @@ import VnPayRouter from "./routers/VnPay";
 import orderRouter from "./routers/order";
 import dotenv from "dotenv";
 import UserRouter from "./routers/auth";
+import commentRouter from "./routers/comment";
 
 //Config express
 const app: any = express();
@@ -20,6 +21,7 @@ app.use("/api", categoryRouter);
 app.use("/api", couponRouter);
 app.use("/api", productRouter);
 app.use("/order", VnPayRouter);
+app.use("/comment", commentRouter);
 app.use("/", orderRouter);
 
 app.use("/", UserRouter);
