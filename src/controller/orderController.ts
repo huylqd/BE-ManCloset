@@ -2,7 +2,6 @@ import { orderSchema } from "../schema/orderSchema";
 import Bill from "../model/order";
 import { Request, Response } from "express";
 import User from "../model/user";
-import { Request, Response } from "express";
 export const getAllBill = async (req: Request, res: Response) => {
   try {
     const bills = await Bill.find();
