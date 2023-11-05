@@ -63,19 +63,37 @@ const orderSchema: Schema<IOrder> = new Schema(
       required: true,
       min: 0,
     },
+    id_transaction: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true, versionKey: false }
 );
 
 orderSchema.pre("save", function (next) {
-  if (
-    this.history_order_status.every((entry) => entry.status !== "Đang xử lý")
-  ) {
-    this.history_order_status.push({
-      status: OrderStatus.Processing,
-      createdAt: new Date(),
-    });
+  if (this.payment_method === "vnpay") {
+    if (
+      this.history_order_status.every(
+        (entry) => entry.status !== "Chưa thanh toán"
+      )
+    ) {
+      this.history_order_status.push({
+        status: OrderStatus.NotPaid,
+        createdAt: new Date(),
+      });
+    }
+  } else if (this.payment_method === "shipcode") {
+    if (
+      this.history_order_status.every((entry) => entry.status !== "Đang xử lý")
+    ) {
+      this.history_order_status.push({
+        status: OrderStatus.Processing,
+        createdAt: new Date(),
+      });
+    }
   }
+
   next();
 });
 
