@@ -98,3 +98,42 @@ export const refeshToken = async (req, res) => {
         data: token,
     });
 }
+
+export const getAllUser = async (req, res) => {
+    try {
+        const user = await User.find({})
+        if(user.length === 0 ) {
+            res.status(200).json({
+                message:"No have result"
+            })
+        }
+        res.status(200).json({
+            message: "Get All User Successfully",
+            data: user
+        }) 
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error get user "
+        })
+    }
+}
+
+export const getOneUser = async (req, res) => {
+    try {
+        const { id } = req.params
+        const user = await User.findById(id)
+        if(!user) {
+            res.status(404).json({
+                message: "user not found"
+            }) 
+        }
+        res.status(200).json({
+            message: "Get user success",
+            data: user
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error get user",
+          });
+    }
+}
