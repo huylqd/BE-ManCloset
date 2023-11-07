@@ -43,7 +43,6 @@ const productSchema = new mongoose.Schema<IProduct>(
     couponId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Coupon",
-      required: true,
     },
     createdAt: {
       type: Date,
