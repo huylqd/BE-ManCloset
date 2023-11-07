@@ -19,6 +19,7 @@ const commentSchema: Schema<IComment> = new Schema(
     },
     rating: {
       enum: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+      type: Number,
       required: true,
       default: 5,
     },
