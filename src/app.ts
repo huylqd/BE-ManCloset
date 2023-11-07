@@ -4,6 +4,8 @@ import cors from "cors";
 import categoryRouter from "./routers/category";
 import couponRouter from "./routers/coupon";
 import productRouter from "./routers/product";
+import saleRouter from "./routers/sale";
+import { isCheckedSale } from "./controller/saleController";
 import VnPayRouter from "./routers/VnPay";
 import orderRouter from "./routers/order";
 import dotenv from "dotenv";
@@ -22,10 +24,12 @@ app.use("/api", couponRouter);
 app.use("/api", productRouter);
 app.use("/order", VnPayRouter);
 app.use("/comment", commentRouter);
+app.use("/api", saleRouter);
 app.use("/", orderRouter);
 
 app.use("/", UserRouter);
 
+isCheckedSale();
 //Connect DB
 const mongoUrl = process.env.MONGODB_URL;
 mongoose.connect(mongoUrl, {

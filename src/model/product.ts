@@ -43,10 +43,9 @@ const productSchema = new mongoose.Schema<IProduct>(
       ref: "Categories",
       required: true,
     },
-    couponId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Coupon",
-      required: true,
+    discount: {
+      type: Number,
+      default: 0,
     },
     createdAt: {
       type: Date,
