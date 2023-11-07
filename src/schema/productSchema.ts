@@ -1,11 +1,13 @@
 import joi from "joi";
 
 export const productSchema = joi.object({
+  _id: joi.string(),
   productName: joi.string().required(),
   price: joi.number().required().min(0),
   description: joi.string(),
   properties: joi.array().items(
     joi.object({
+      _id: joi.string(),
       imageUrl: joi.string().required(),
       color: joi.string().required(),
       quantity: joi.number().required().min(0),
