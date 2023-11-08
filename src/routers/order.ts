@@ -9,10 +9,10 @@ import {
 } from "../controller/orderController";
 const router = express.Router();
 
-router.get("/cart", getAllBill);
-router.get("/cart/:id", billHistoryById);
-router.get("/cart/:userId", billHistoryByUserId);
-router.post("/cart", createBill);
-router.patch("/cart/:id", updateBill);
+router.get("/order", getAllBill);
+router.get("/order/:id", billHistoryById);
+router.get("/order/:userId", billHistoryByUserId);
+router.post("/order", createBill);
+router.patch("/order/:id", updateBill);
 
 export default router;

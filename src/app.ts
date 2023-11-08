@@ -3,11 +3,12 @@ import mongoose from "mongoose";
 import cors from "cors";
 import categoryRouter from "./routers/category";
 import couponRouter from "./routers/coupon";
-import productRouter from "./routers/product";
 import saleRouter from "./routers/sale";
 import { isCheckedSale } from "./controller/saleController";
 import VnPayRouter from "./routers/VnPay";
 import orderRouter from "./routers/order";
+import productRouter from "./routers/product";
+import cartRouter from "./routers/cart";
 import dotenv from "dotenv";
 import UserRouter from "./routers/auth";
 import commentRouter from "./routers/comment";
@@ -31,6 +32,9 @@ app.use("/", UserRouter);
 
 isCheckedSale();
 //Connect DB
+
+app.use("/api", cartRouter);
+
 const mongoUrl = process.env.MONGODB_URL;
 mongoose.connect(mongoUrl, {
   dbName: "datn",
