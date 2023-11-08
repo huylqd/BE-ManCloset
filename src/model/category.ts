@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 import { ICate } from "../interface/category";
 
 const categorySchema: Schema<ICate> = new Schema(
@@ -12,4 +13,9 @@ const categorySchema: Schema<ICate> = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-export default mongoose.model("Categories", categorySchema);
+categorySchema.plugin(mongoosePaginate);
+const category = mongoose.model<ICate, mongoose.PaginateModel<ICate>>(
+  "Categories",
+  categorySchema
+);
+export default category;
