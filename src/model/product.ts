@@ -5,23 +5,20 @@ import { IProduct } from "../interface/product";
 
 const plugins = [paginate, mongooseDelete];
 
-const propertySchema = new mongoose.Schema(
-  {
-    imageUrl: {
-      type: String,
-    },
-    color: {
-      type: String,
-    },
-    quantity: {
-      type: Number,
-    },
-    size: {
-      type: String,
-    },
+const propertySchema = new mongoose.Schema({
+  imageUrl: {
+    type: String,
   },
-  { _id: false }
-);
+  color: {
+    type: String,
+  },
+  variants: [
+    {
+      size: { type: String },
+      quantity: { type: Number },
+    },
+  ],
+});
 
 const productSchema = new mongoose.Schema<IProduct>(
   {
