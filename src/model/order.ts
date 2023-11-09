@@ -48,8 +48,7 @@ const orderSchema: Schema<IOrder> = new Schema(
     payment_method: {
       enum: ["shipcode", "vnpay"],
       type: String,
-      default: "shipcode",
-      required: true,
+      required:true
     },
 
     shipping_address: {

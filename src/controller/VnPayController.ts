@@ -31,6 +31,7 @@ export const create_payment_url = async (req, res) => {
   const data = {
     user_id: req.body.user_id,
     shipping_address: req.body.shipping_address,
+    payment_method:req.body.payment_method,
     items: req.body.items,
     total_price: req.body.total_price,
     id_transaction: String(orderId),
