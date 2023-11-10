@@ -34,7 +34,7 @@ export const createCategory = async (req: any, res: any) => {
 export const getAllCategory = async (req: any, res: any) => {
   const {
     _page = 1,
-    _limit = 10,
+    _limit = _page == 0 ? 10000000 : 2,
     _sort = "createdAt",
     _order = "asc",
     _expand,
