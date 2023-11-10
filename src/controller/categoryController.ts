@@ -4,7 +4,6 @@ import { categorySchema } from "../schema/categorySchema";
 export const createCategory = async (req: any, res: any) => {
   try {
     res.setHeader("Content-Type", "application/json");
-
     const { error } = categorySchema.validate(req.body);
     if (error) {
       console.log("error", error);
@@ -33,18 +32,35 @@ export const createCategory = async (req: any, res: any) => {
 };
 
 export const getAllCategory = async (req: any, res: any) => {
+  const {
+    _page = 1,
+    _limit = _page == 0 ? 10000000 : 2,
+    _sort = "createdAt",
+    _order = "asc",
+    _expand,
+  } = req.query;
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+  };
   try {
     res.setHeader("Content-Type", "application/json");
-    const category = await Category.find({});
+    const result = await Category.paginate({}, options);
     // console.log("category:", category);
-    if (category.length === 0) {
+    if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",
       });
     }
     res.status(200).json({
       message: "Category get all successfully",
-      data: category,
+      data: result.docs,
+      paginate: {
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalItems: result.totalDocs,
+      },
     });
   } catch (error) {
     return res.status(500).json({

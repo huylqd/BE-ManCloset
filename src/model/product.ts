@@ -5,6 +5,21 @@ import { IProduct } from "../interface/product";
 
 const plugins = [paginate, mongooseDelete];
 
+const propertySchema = new mongoose.Schema({
+  imageUrl: {
+    type: String,
+  },
+  color: {
+    type: String,
+  },
+  variants: [
+    {
+      size: { type: String },
+      quantity: { type: Number },
+    },
+  ],
+});
+
 const productSchema = new mongoose.Schema<IProduct>(
   {
     productName: {
@@ -19,30 +34,15 @@ const productSchema = new mongoose.Schema<IProduct>(
     description: {
       type: String,
     },
-    properties: [
-      {
-        imageUrl: {
-          type: String,
-        },
-        color: {
-          type: String,
-        },
-        quantity: {
-          type: Number,
-        },
-        size: {
-          type: String,
-        },
-      },
-    ],
+    properties: [propertySchema],
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Categories",
       required: true,
     },
-    couponId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Coupon",
+    discount: {
+      type: Number,
+      default: 0,
     },
     createdAt: {
       type: Date,
