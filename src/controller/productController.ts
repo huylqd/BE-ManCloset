@@ -4,10 +4,10 @@ import Category from "../model/category";
 import Product from "../model/product";
 import { productSchema } from "../schema/productSchema";
 
-export const getAllProduct = async (req: Request, res: Response) => {
+export const getAllProduct = async (req: any, res: any) => {
   const {
     _page = 1,
-    _limit = 10,
+    _limit = _page == 0 ? 10000000 : 2,
     _sort = "createdAt",
     _order = "asc",
     _expand,
@@ -43,6 +43,18 @@ export const getProductById = async (req: Request, res: Response) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
+export const getProductByCategoryId = async (req: Request, res: Response ) => {
+  try {
+    const {categoryId} = req.params;
+    const product = await Product.find({categoryId: categoryId});
+    if (!product) throw new Error("Product not found");
+    return res.status(200).json({ data: product });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const { error } = productSchema.validate(req.body, { abortEarly: false });
