@@ -4,7 +4,13 @@ import * as cron from "node-cron";
 import Product from "../model/product";
 export const createSale = async (req: Request, res: Response) => {
   try {
-    const { discountPercentage, categoryId, startDate, endDate } = req.body;
+    const {
+      discountPercentage,
+      categoryId,
+      startDate,
+      endDate,
+      numberOfProductsToDiscount,
+    } = req.body;
     const sale = await Sale.find({ categoryId: categoryId });
     if (sale.length === 0) {
       // Tạo một cuộc giảm giá mới
@@ -12,7 +18,7 @@ export const createSale = async (req: Request, res: Response) => {
         discountPercentage: discountPercentage,
         categoryId: categoryId,
         startDate: Date.now(),
-        endDate: Date.now() + 1000 * 30,
+        endDate: Date.now() + 1000 * 60,
       });
 
       // Lưu cuộc giảm giá vào cơ sở dữ liệu
@@ -22,13 +28,19 @@ export const createSale = async (req: Request, res: Response) => {
       const products = await Product.find({ categoryId: categoryId });
       // console.log(products);
 
-      // Duyệt qua từng sản phẩm và áp dụng giảm giá
-      products.forEach(async (product) => {
-        const discount = Math.floor(Math.random() * discountPercentage);
-        // Lưu thông tin giảm giá vào sản phẩm
+      // Trộn lại mảng products
+      const shuffledProducts = products.sort(() => Math.random() - 0.5);
+
+      for (
+        let i = 0;
+        i < numberOfProductsToDiscount && i < shuffledProducts.length;
+        i++
+      ) {
+        const product = shuffledProducts[i];
+        const discount = discountPercentage;
         product.discount = discount;
         await Product.updateOne({ _id: product._id }, product);
-      });
+      }
       // console.log(products);
 
       return res.json({
@@ -46,7 +58,7 @@ export const createSale = async (req: Request, res: Response) => {
 };
 
 // Lên lịch kiểm tra cuộc giảm giá kết thúc hàng ngày
-const task = cron.schedule("0 0 * * *", async () => {
+const task = cron.schedule("* * * * *", async () => {
   try {
     const currentDate = new Date();
 
