@@ -214,3 +214,74 @@ export const exportBill = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const productSold = async (req: Request, res: Response) => {
+  // Lấy ngày bắt đầu và kết thúc của tháng hiện tại
+  const startDate = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1
+  );
+  const endDate = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() + 1,
+    0
+  );
+  // Lấy ngày bắt đầu và kết thúc của ngày hiện tại
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  // Lấy ngày bắt đầu và kết thúc của năm hiện tại
+  const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+  const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+  // Lấy ngày bắt đầu và kết thúc của tuần hiện tại
+  const currentDate = new Date();
+  const startOfWeek = new Date(
+    currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+  ); // Ngày đầu tuần (chủ nhật)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 6); // Ngày cuối tuần (thứ bảy)
+  try {
+    const result = await Bill.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfWeek,
+            $lte: endOfWeek,
+          },
+        },
+      },
+      {
+        $unwind: "$items", // Mở rộng mảng 'items' thành các bản ghi riêng lẻ
+      },
+      {
+        $group: {
+          _id: "$items.product_id", // Nhóm theo product_id
+          totalQuantitySold: { $sum: "$items.property.quantity" }, // Tính tổng số lượng đã bán
+          totalAmountSold: { $sum: "$items.sub_total" },
+        },
+      },
+      {
+        $project: {
+          _id: 0, // Loại bỏ trường _id
+          product_id: "$_id", // Đặt lại tên trường product_id
+          totalQuantitySold: 1, // Giữ lại trường totalQuantitySold
+          totalAmountSold: 1,
+        },
+      },
+      {
+        $sort: {
+          totalQuantitySold: -1, // Sắp xếp theo số lượng giảm dần
+        },
+      },
+    ]).exec();
+    return res.status(200).json({
+      message: "Sản phẩm bán chạy",
+      data: result,
+    });
+  } catch (error) {
+    return error.message;
+  }
+};

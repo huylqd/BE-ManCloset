@@ -6,6 +6,7 @@ import {
   createBill,
   exportBill,
   getAllBill,
+  productSold,
   updateBill,
 } from "../controller/orderController";
 const router = express.Router();
@@ -16,5 +17,5 @@ router.get("/order/:userId", billHistoryByUserId);
 router.post("/order", createBill);
 router.patch("/order/:id", updateBill);
 router.get("/order/export", exportBill);
-
+router.get("/analyst", productSold);
 export default router;
