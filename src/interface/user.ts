@@ -1,12 +1,19 @@
 import { Request } from "express";
 
+type Address = {
+  city: String,
+  district: String,
+  wards: String,
+  detailAdress: String
+  isDefault: Boolean
+}
 export interface IUser {
   _id: string;
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
-  address: string | undefined;
+  address: Address[];
   phone: number | undefined;
   role: string;
 }

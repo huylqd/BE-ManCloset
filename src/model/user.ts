@@ -1,6 +1,16 @@
 import mongoose, { Schema } from "mongoose";
 import { IUser } from "../interface/user";
 
+const addressSchema = new mongoose.Schema(
+  {
+    city: String,
+    district: String,
+    wards: String,
+    detailAdress: String,
+    isDefault: Boolean
+  }
+)
+
 const userSchema: Schema<IUser> = new mongoose.Schema({
   name: {
     type: Schema.Types.String,
@@ -18,6 +28,11 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   confirmPassword: {
     type: String,
     require: true,
+  },
+  address: {
+    type: [addressSchema],
+    required: true,
+    default: []
   },
   role: {
     type: String,

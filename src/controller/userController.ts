@@ -137,3 +137,39 @@ export const getOneUser = async (req, res) => {
           });
     }
 }
+
+export const addNewAddess = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const newAddress = req.body;
+        const user = await User.findById(userId)
+        if(!user) {
+            return res.status(404).json({
+                error: "User not found"
+            })
+        }
+       
+        const isFirstAddress = user.address.length === 0;
+
+        newAddress.isDefault = isFirstAddress;
+
+        if (!isFirstAddress) {
+            user.address.forEach(address => {
+                address.isDefault = false;
+            });
+        }
+
+        // Thêm địa chỉ mới vào mảng
+        user.address.push(newAddress);
+
+        // Lưu trạng thái mới của người dùng
+        await user.save();
+
+        return res.status(200).json({
+            message: 'Add address success',
+            data: user.address
+        });
+    } catch (error) {
+        return res.status(500)
+    }
+}
