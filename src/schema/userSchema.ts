@@ -20,7 +20,7 @@ export const signUpSchema = joi.object({
         "string.empty": "Confirm password không được để trống",
         "any.required": "Trường confirm password là bắt buộc",
     }),
-    address: joi.string(),
+    address: joi.array(),
     phone: joi.number(),
     role: joi.string()
 })
