@@ -7,7 +7,10 @@ const addressSchema = new mongoose.Schema(
     district: String,
     wards: String,
     detailAdress: String,
-    isDefault: Boolean
+    isDefault: {
+      type:Boolean,
+      default: false
+    }
   }
 )
 
