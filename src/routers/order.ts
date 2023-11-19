@@ -10,8 +10,8 @@ import {
 const router = express.Router();
 
 router.get("/order", getAllBill);
-// router.get("/order/:id", billHistoryById);
-router.get("/order/:userId", billHistoryByUserId);
+router.get("/order/:id", billHistoryById);
+router.get("/order/user/:userId", billHistoryByUserId);
 router.post("/order", createBill);
 router.patch("/order/:id", updateBill);
 

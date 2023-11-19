@@ -61,21 +61,36 @@ export const billHistoryById = async (req: Request, res: Response) => {
   }
 };
 
-export const billHistoryByUserId = async (req: Request, res: Response) => {
+export const billHistoryByUserId = async (req: any, res: Response) => {
+  const {
+    _page = 1,
+    _limit = _page == 0 ? 1000000000 : 1,
+    _sort = "createdAt",
+    _order = "asc",
+    _expand,
+  } = req.query;
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+  };
   try {
     const id = req.params.userId;
-    const bill = await Bill.find({ user_id: id }).sort({
-      createAt: -1,
-    });
+    const bill = await Bill.paginate({ user_id: id },options)
 
     if (!bill) {
-      return res.status(404).json({
+      return res.status(404).json({ 
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
       });
     }
     return res.status(200).json({
       message: "Đơn hàng của bạn đây",
-      data: bill,
+      data: bill.docs,
+      paginate:{
+        currentPage: bill.page,
+        totalPages: bill.totalPages,
+        totalItems: bill.totalDocs,
+      }
     });
   } catch (error) {
     return res.status(500).json({
