@@ -27,3 +27,11 @@ export interface IProductResponse {
     totalItems: number;
   };
 }
+export interface ProductItem {
+  productName: string;
+  size: string;
+  color: string;
+  quantity: number;
+  price: number;
+  subTotal: number;
+}

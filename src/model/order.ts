@@ -49,8 +49,8 @@ const orderSchema: Schema<IOrder> = new Schema(
     payment_method: {
       enum: ["shipcode", "vnpay"],
       type: String,
-      default:"shipcode",
-      required:true
+      default: "shipcode",
+      required: true,
     },
 
     shipping_address: {
@@ -67,6 +67,14 @@ const orderSchema: Schema<IOrder> = new Schema(
     id_transaction: {
       type: String,
       default: null,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true, versionKey: false }

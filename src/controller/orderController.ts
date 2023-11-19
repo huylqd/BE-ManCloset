@@ -1,7 +1,12 @@
 import { orderSchema } from "../schema/orderSchema";
 import Bill from "../model/order";
 import { Request, Response } from "express";
+import fs from "fs";
+import PDFDocument from "pdfkit";
 import User from "../model/user";
+import product from "../model/product";
+import { ProductItem } from "../interface/product";
+
 export const getAllBill = async (req: Request, res: Response) => {
   try {
     const bills = await Bill.find();
@@ -140,6 +145,88 @@ export const updateBill = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
       data: bill,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+    });
+  }
+};
+
+export const exportBill = async (req: Request, res: Response) => {
+  try {
+    const bills = await Bill.find({
+      "history_order_status.status": "Đã thanh toán",
+    });
+
+    
+    const userIds = bills.map((item) => item.user_id);
+    const users = await User.find({
+      _id: {
+        $in: userIds,
+      },
+    });
+
+    
+
+    const exportCustom = bills.map((bill) => {
+      const user = users.find((user) => user._id == bill.user_id);
+      const userName = user.name;
+      return {
+        ...bill,
+        userName: userName,
+      };
+    });
+    if (exportCustom.length === 0) {
+      return res.status(400).json({
+        message: "Không có hóa đơn nào",
+      });
+    }
+
+    // Tạo tệp PDF
+    const pdfDoc = new PDFDocument();
+    pdfDoc.pipe(fs.createWriteStream("bills.pdf"));
+
+    exportCustom.forEach(async (bill) => {
+      const products: ProductItem[] = [];
+      for (const item of bill.items) {
+        const productItem = await product.findOne({ _id: item.product_id });
+        products.push({
+          productName: productItem.productName,
+          size: item.property.size,
+          color: item.property.color,
+          quantity: item.property.quantity,
+          price: item.price,
+          subTotal: item.sub_total,
+        });
+      }
+      pdfDoc.text(`ID Hóa Đơn: ${bill._id}`);
+      pdfDoc.text(`Ngày Xuất Hóa Đơn: ${bill.createdAt}`);
+      pdfDoc.text(`Tên người gửi: Man Closet`);
+      pdfDoc.text(`Địa chỉ người gửi: ngõ 53 tân triều thanh trì hà nội`);
+      pdfDoc.text(`Tên người nhận: ${bill.userName}`);
+      pdfDoc.text(`Địa chỉ người nhận: ${bill.shipping_address}`);
+      pdfDoc.text(
+        `Sản phẩm bao gồm có: ${products
+          .map(
+            (product) =>
+              `${product.productName} - ${product.size} - ${product.color} - ${product.quantity} - ${product.price}`
+          )
+          .join(", ")}`
+      );
+      pdfDoc.text(
+        `Tổng tiền: ${products.map((product) => product.subTotal).join(", ")}`,
+        { format: { bold: true } }
+      );
+    
+    });
+    pdfDoc.moveDown();
+
+    pdfDoc.end(); // Kết thúc và lưu tệp
+
+    return res.status(200).json({
+      message: "Danh sách hóa đơn đã được xuất ra tệp PDF",
+      data: exportCustom,
     });
   } catch (error) {
     return res.status(500).json({

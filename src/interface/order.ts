@@ -7,7 +7,9 @@ export interface IOrder {
   payment_method: string;
   total_price: number;
   history_order_status: IHistoryStatus[];
-  id_transaction: String
+  id_transaction: String;
+  createdAt: Date;
+  updatedAt: Date;
 }
 export enum OrderStatus {
   Processing = "Đang xử lý",
