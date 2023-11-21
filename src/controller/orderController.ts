@@ -155,6 +155,8 @@ export const updateBill = async (req: Request, res: Response) => {
 
 export const exportBill = async (req: Request, res: Response) => {
   try {
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
     const bills = await Bill.find({
       "history_order_status.status": "Đã thanh toán",
     });
@@ -184,15 +186,15 @@ export const exportBill = async (req: Request, res: Response) => {
     console.log("custom user", exportCustom);
 
     // Tạo tệp PDF
-    const pdfDoc = new PDFDocument();
-    pdfDoc.pipe(fs.createWriteStream("bills.pdf"));
 
-    exportCustom.forEach(async (bill) => {
+    const pdfDoc = new PDFDocument();
+    pdfDoc.pipe(res);
+    for (const bill of exportCustom) {
       const products: ProductItem[] = [];
-      console.log("bill docs", bill._doc);
+      // console.log("bill docs", bill._doc);
       for (const item of bill._doc.items) {
         const productItem = await product.findOne({ _id: item.product_id });
-
+        console.log("productname", productItem);
         products.push({
           productName: productItem?.productName,
           size: item?.property?.size,
@@ -212,7 +214,7 @@ export const exportBill = async (req: Request, res: Response) => {
         `Sản phẩm bao gồm có: ${products
           .map(
             (product) =>
-              `${product.productName} - ${product.size} - ${product.color} - ${product.quantity} - ${product.price}`
+              `${product?.productName} - ${product.size} - ${product.color} - ${product.quantity} - ${product.price}`
           )
           .join(", ")}`
       );
@@ -220,9 +222,8 @@ export const exportBill = async (req: Request, res: Response) => {
         `Tổng tiền: ${products.map((product) => product.subTotal).join(", ")}`,
         { format: { bold: true } }
       );
-    
-    });
-    pdfDoc.moveDown();
+      pdfDoc.moveDown();
+    }
 
     pdfDoc.end();
 
