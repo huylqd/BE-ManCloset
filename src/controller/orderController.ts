@@ -159,29 +159,29 @@ export const exportBill = async (req: Request, res: Response) => {
       "history_order_status.status": "Đã thanh toán",
     });
 
-    
     const userIds = bills.map((item) => item.user_id);
     const users = await User.find({
       _id: {
         $in: userIds,
       },
     });
+    console.log("user", users);
+    const exportCustom: any = await Promise.all(
+      bills.map(async (bill) => {
+        const user = users.filter((user) => user._id.equals(bill.user_id));
+        // console.log("bill user_id", bill.user_id);
+        // console.log("user bill", user[0].name);
+        const userName = user[0].name;
+        return { ...bill, userName: userName };
+      })
+    );
 
-    
-
-    const exportCustom = bills.map((bill) => {
-      const user = users.find((user) => user._id == bill.user_id);
-      const userName = user.name;
-      return {
-        ...bill,
-        userName: userName,
-      };
-    });
     if (exportCustom.length === 0) {
       return res.status(400).json({
         message: "Không có hóa đơn nào",
       });
     }
+    console.log("custom user", exportCustom);
 
     // Tạo tệp PDF
     const pdfDoc = new PDFDocument();
@@ -189,23 +189,25 @@ export const exportBill = async (req: Request, res: Response) => {
 
     exportCustom.forEach(async (bill) => {
       const products: ProductItem[] = [];
-      for (const item of bill.items) {
+      console.log("bill docs", bill._doc);
+      for (const item of bill._doc.items) {
         const productItem = await product.findOne({ _id: item.product_id });
+
         products.push({
-          productName: productItem.productName,
-          size: item.property.size,
-          color: item.property.color,
-          quantity: item.property.quantity,
-          price: item.price,
-          subTotal: item.sub_total,
+          productName: productItem?.productName,
+          size: item?.property?.size,
+          color: item?.property?.color,
+          quantity: item?.property?.quantity,
+          price: item?.price,
+          subTotal: item?.sub_total,
         });
       }
-      pdfDoc.text(`ID Hóa Đơn: ${bill._id}`);
-      pdfDoc.text(`Ngày Xuất Hóa Đơn: ${bill.createdAt}`);
+      pdfDoc.text(`ID Hóa Đơn: ${bill?._doc?._id}`);
+      pdfDoc.text(`Ngày Xuất Hóa Đơn: ${bill?._doc?.createdAt}`);
       pdfDoc.text(`Tên người gửi: Man Closet`);
       pdfDoc.text(`Địa chỉ người gửi: ngõ 53 tân triều thanh trì hà nội`);
-      pdfDoc.text(`Tên người nhận: ${bill.userName}`);
-      pdfDoc.text(`Địa chỉ người nhận: ${bill.shipping_address}`);
+      pdfDoc.text(`Tên người nhận: ${bill?.userName}`);
+      pdfDoc.text(`Địa chỉ người nhận: ${bill?._doc?.shipping_address}`);
       pdfDoc.text(
         `Sản phẩm bao gồm có: ${products
           .map(
@@ -222,7 +224,7 @@ export const exportBill = async (req: Request, res: Response) => {
     });
     pdfDoc.moveDown();
 
-    pdfDoc.end(); // Kết thúc và lưu tệp
+    pdfDoc.end();
 
     return res.status(200).json({
       message: "Danh sách hóa đơn đã được xuất ra tệp PDF",
@@ -232,5 +234,76 @@ export const exportBill = async (req: Request, res: Response) => {
     return res.status(500).json({
       message: error,
     });
+  }
+};
+
+export const productSold = async (req: Request, res: Response) => {
+  // Lấy ngày bắt đầu và kết thúc của tháng hiện tại
+  const startDate = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1
+  );
+  const endDate = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() + 1,
+    0
+  );
+  // Lấy ngày bắt đầu và kết thúc của ngày hiện tại
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  // Lấy ngày bắt đầu và kết thúc của năm hiện tại
+  const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+  const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+  // Lấy ngày bắt đầu và kết thúc của tuần hiện tại
+  const currentDate = new Date();
+  const startOfWeek = new Date(
+    currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+  ); // Ngày đầu tuần (chủ nhật)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 6); // Ngày cuối tuần (thứ bảy)
+  try {
+    const result = await Bill.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: startOfWeek,
+            $lte: endOfWeek,
+          },
+        },
+      },
+      {
+        $unwind: "$items", // Mở rộng mảng 'items' thành các bản ghi riêng lẻ
+      },
+      {
+        $group: {
+          _id: "$items.product_id", // Nhóm theo product_id
+          totalQuantitySold: { $sum: "$items.property.quantity" }, // Tính tổng số lượng đã bán
+          totalAmountSold: { $sum: "$items.sub_total" },
+        },
+      },
+      {
+        $project: {
+          _id: 0, // Loại bỏ trường _id
+          product_id: "$_id", // Đặt lại tên trường product_id
+          totalQuantitySold: 1, // Giữ lại trường totalQuantitySold
+          totalAmountSold: 1,
+        },
+      },
+      {
+        $sort: {
+          totalQuantitySold: -1, // Sắp xếp theo số lượng giảm dần
+        },
+      },
+    ]).exec();
+    return res.status(200).json({
+      message: "Sản phẩm bán chạy",
+      data: result,
+    });
+  } catch (error) {
+    return error.message;
   }
 };

@@ -12,6 +12,10 @@ const saleSchema: Schema<ISale> = new Schema({
     ref: "Categories",
     required: true,
   },
+  numberOfProductsToDiscount: {
+    type: Schema.Types.Number,
+    // required: true,
+  },
   startDate: {
     type: Schema.Types.Date,
     required: true,
