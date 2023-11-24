@@ -40,7 +40,7 @@ const cartSchema = new Schema(
       },
     ],
   },
-  { _id: false }
+  
 );
 
 export default mongoose.model("Cart", cartSchema);

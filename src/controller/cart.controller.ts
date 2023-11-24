@@ -32,21 +32,28 @@ export const addProductToCard = async (
   next: NextFunction
 ) => {
   const { product, user_id } = req.body;
+  // console.log(req.body);
+  
   const { _id } = product;
 
   // kiem tra san pham co ton tai trong products khong
-  const productExistInCart = await Cart.findOne({
+
+  const productExistInCart = await Cart.find({
     user_id: user_id,
     "products._id": _id,
   });
-
-  if (!productExistInCart) {
+  console.log(productExistInCart);
+  
+  if (!productExistInCart || productExistInCart.length === 0) {
     // neu san pham chua ton tai, them san pham vao products []
     const productAddToCart = {
       ...product,
       addedAt: new Date(),
       updatedAt: new Date(),
     };
+    console.log(productAddToCart);
+    
+    
 
     await Cart.updateOne(
       { user_id: user_id },

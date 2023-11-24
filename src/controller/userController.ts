@@ -3,6 +3,7 @@ import { signUpSchema, signInSchema } from "../schema/userSchema";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from "../middleware/checkPermission";
+import Cart from "../model/cart";
 
 export const signUp = async (req, res) => {
     try {
@@ -31,6 +32,11 @@ export const signUp = async (req, res) => {
             email,
             password: hashedPassword
         })
+
+            const cart = await Cart.create({
+                user_id:user._id,
+                products:[]
+            })
 
         return res.json({
             message: "User created successfully",
@@ -252,3 +258,46 @@ export const deleteAddress = async (req, res) => {
         })
     }
 }
+
+
+export const updateUser = async (req:any,res:any) => {
+    try {
+        const { id } = req.params;
+        const { address} = req.body;
+        // Tạo đối tượng chứa các trường được cập nhật trong user
+        let updatedFields = {};
+        if (address && Array.isArray(address)) {
+            // Tìm vị trí của địa chỉ cần cập nhật trong mảng address
+            const addressIndex = address.findIndex((item) => item._id);
+            if (addressIndex !== -1) {
+              // Cập nhật từng trường của địa chỉ cần cập nhật
+              Object.keys(address[addressIndex]).forEach((key) => {
+                updatedFields[`address.${addressIndex}.${key}`] = address[addressIndex][key];
+              });
+            }else{
+                updatedFields = req.body;
+            }
+          }
+      
+          // Thực hiện cập nhật
+          const user = await User.findByIdAndUpdate(
+            id,
+            updatedFields ,
+            { new: true }
+          );
+        // console.log("category:", category);
+        if (!user) {
+          res.status(404).json({
+            message: "User not found",
+          });
+        }
+        res.status(200).json({
+          message: "User update successfully",
+          data: user,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: error
+          });
+    }
+    }

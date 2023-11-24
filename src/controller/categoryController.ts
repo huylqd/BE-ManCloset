@@ -38,6 +38,7 @@ export const getAllCategory = async (req: any, res: any) => {
     _sort = "createdAt",
     _order = "asc",
     _expand,
+    _keywords,
   } = req.query;
   const options: any = {
     page: _page,
@@ -46,22 +47,35 @@ export const getAllCategory = async (req: any, res: any) => {
   };
   try {
     res.setHeader("Content-Type", "application/json");
+    // const searchData = (categories) => {
+    //   return categories?.docs?.filter((item) =>
+    //     item.name.toLowerCase().includes( _keywords)
+    //   );
+    // };
     const result = await Category.paginate({}, options);
-    // console.log("category:", category);
+    console.log("category:", result);
     if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",
       });
+    }else{
+      // const searchDataCategory = await searchData(result);
+      
+      
+      // const categoryResponse =  await { ...result, docs: searchDataCategory };
+      //  console.log(categoryResponse.docs);
+      res.status(200).json({
+        message: "Category get all successfully",
+        data: result.docs,
+        paginate: {
+          currentPage: result.page,
+          totalPages: result.totalPages,
+          totalItems: result.totalDocs,
+          limit:result.limit
+        },
+      });
     }
-    res.status(200).json({
-      message: "Category get all successfully",
-      data: result.docs,
-      paginate: {
-        currentPage: result.page,
-        totalPages: result.totalPages,
-        totalItems: result.totalDocs,
-      },
-    });
+ 
   } catch (error) {
     return res.status(500).json({
       message: "Error getting category list",
