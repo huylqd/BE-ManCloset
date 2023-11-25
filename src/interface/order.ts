@@ -31,6 +31,7 @@ export interface IOrderItem {
     quantity: number;
     color: string;
     size: string;
+    imageUrl:string
   };
   price: number;
   sub_total: number;

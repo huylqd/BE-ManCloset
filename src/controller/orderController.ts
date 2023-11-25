@@ -66,21 +66,36 @@ export const billHistoryById = async (req: Request, res: Response) => {
   }
 };
 
-export const billHistoryByUserId = async (req: Request, res: Response) => {
+export const billHistoryByUserId = async (req: any, res: Response) => {
+  const {
+    _page = 1,
+    _limit = _page == 0 ? 1000000000 : 1,
+    _sort = "createdAt",
+    _order = "asc",
+    _expand,
+  } = req.query;
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+  };
   try {
     const id = req.params.userId;
-    const bill = await Bill.find({ user_id: id }).sort({
-      createAt: -1,
-    });
+    const bill = await Bill.paginate({ user_id: id },options)
 
     if (!bill) {
-      return res.status(404).json({
+      return res.status(404).json({ 
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
       });
     }
     return res.status(200).json({
       message: "Đơn hàng của bạn đây",
-      data: bill,
+      data: bill.docs,
+      paginate:{
+        currentPage: bill.page,
+        totalPages: bill.totalPages,
+        totalItems: bill.totalDocs,
+      }
     });
   } catch (error) {
     return res.status(500).json({
@@ -140,58 +155,66 @@ export const updateBill = async (req: Request, res: Response) => {
 
 export const exportBill = async (req: Request, res: Response) => {
   try {
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
     const bills = await Bill.find({
-      "history_order_status.status": "đã thanh toán",
+      "history_order_status.status": "Đã thanh toán",
     });
+
     const userIds = bills.map((item) => item.user_id);
     const users = await User.find({
       _id: {
         $in: userIds,
       },
     });
+    console.log("user", users);
+    const exportCustom: any = await Promise.all(
+      bills.map(async (bill) => {
+        const user = users.filter((user) => user._id.equals(bill.user_id));
+        // console.log("bill user_id", bill.user_id);
+        // console.log("user bill", user[0].name);
+        const userName = user[0].name;
+        return { ...bill, userName: userName };
+      })
+    );
 
-    const exportCustom = bills.map((bill) => {
-      const user = users.find((user) => user._id == bill.user_id);
-      const userName = user.name;
-      return {
-        ...bill,
-        userName: userName,
-      };
-    });
     if (exportCustom.length === 0) {
       return res.status(400).json({
         message: "Không có hóa đơn nào",
       });
     }
+    console.log("custom user", exportCustom);
 
     // Tạo tệp PDF
-    const pdfDoc = new PDFDocument();
-    pdfDoc.pipe(fs.createWriteStream("bills.pdf"));
 
-    exportCustom.forEach(async (bill) => {
+    const pdfDoc = new PDFDocument();
+    pdfDoc.pipe(res);
+    for (const bill of exportCustom) {
       const products: ProductItem[] = [];
-      for (const item of bill.items) {
+      // console.log("bill docs", bill._doc);
+      for (const item of bill._doc.items) {
         const productItem = await product.findOne({ _id: item.product_id });
+        console.log("productname", productItem);
         products.push({
-          productName: productItem.productName,
-          size: item.property.size,
-          color: item.property.color,
-          quantity: item.property.quantity,
-          price: item.price,
-          subTotal: item.sub_total,
+          productName: productItem?.productName,
+          size: item?.property?.size,
+          color: item?.property?.color,
+          quantity: item?.property?.quantity,
+          price: item?.price,
+          subTotal: item?.sub_total,
         });
       }
-      pdfDoc.text(`ID Hóa Đơn: ${bill._id}`);
-      pdfDoc.text(`Ngày Xuất Hóa Đơn: ${bill.createdAt}`);
+      pdfDoc.text(`ID Hóa Đơn: ${bill?._doc?._id}`);
+      pdfDoc.text(`Ngày Xuất Hóa Đơn: ${bill?._doc?.createdAt}`);
       pdfDoc.text(`Tên người gửi: Man Closet`);
       pdfDoc.text(`Địa chỉ người gửi: ngõ 53 tân triều thanh trì hà nội`);
-      pdfDoc.text(`Tên người nhận: ${bill.userName}`);
-      pdfDoc.text(`Địa chỉ người nhận: ${bill.shipping_address}`);
+      pdfDoc.text(`Tên người nhận: ${bill?.userName}`);
+      pdfDoc.text(`Địa chỉ người nhận: ${bill?._doc?.shipping_address}`);
       pdfDoc.text(
         `Sản phẩm bao gồm có: ${products
           .map(
             (product) =>
-              `${product.productName} - ${product.size} - ${product.color} - ${product.quantity} - ${product.price}`
+              `${product?.productName} - ${product.size} - ${product.color} - ${product.quantity} - ${product.price}`
           )
           .join(", ")}`
       );
@@ -200,9 +223,9 @@ export const exportBill = async (req: Request, res: Response) => {
         { format: { bold: true } }
       );
       pdfDoc.moveDown();
-    });
+    }
 
-    pdfDoc.end(); // Kết thúc và lưu tệp
+    pdfDoc.end();
 
     return res.status(200).json({
       message: "Danh sách hóa đơn đã được xuất ra tệp PDF",

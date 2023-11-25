@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { IOrder, OrderStatus } from "../interface/order";
-
+import mongoosePaginate from "mongoose-paginate-v2";
 const itemSchema = new mongoose.Schema(
   {
     product_id: {
@@ -12,6 +12,7 @@ const itemSchema = new mongoose.Schema(
       quantity: Number,
       color: String,
       size: String,
+      imageUrl: String,
     },
     sub_total: Number,
   },
@@ -104,5 +105,11 @@ orderSchema.pre("save", function (next) {
 
   next();
 });
+orderSchema.plugin(mongoosePaginate);
 
-export default mongoose.model("Order", orderSchema);
+const order = mongoose.model<IOrder, mongoose.PaginateModel<IOrder>>(
+  "Order",
+  orderSchema
+);
+export default order;
+
