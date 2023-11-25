@@ -74,8 +74,8 @@ export const signIn = async (req, res) => {
                 message: "Mật khẩu không khớp"
             })
         }
-        const token = jwt.sign({ _id: user._id }, "123456", { expiresIn: "30s" })
-        const refeshToken = jwt.sign({ _id: user._id }, "123456", { expiresIn: "45s" })
+        const token = jwt.sign({ _id: user._id }, "123456", { expiresIn: "1h" })
+        const refeshToken = jwt.sign({ _id: user._id }, "123456", { expiresIn: "2h" })
         user.password = undefined;
         res.status(200).json({
             message: "Đăng nhập thành công",
@@ -98,10 +98,10 @@ export const refeshToken = async (req, res) => {
             message: result.message
         });
     }
-    const token = jwt.sign({ _id: result._id }, '123456', { expiresIn: "30s" })
+    const token = jwt.sign({ _id: result._id }, '123456', { expiresIn: "30d" })
     res.status(200).json({
         message: "Đăng nhập thành công",
-        data: token,
+        accessToken: token,
     });
 }
 
