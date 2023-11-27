@@ -15,6 +15,8 @@ export const getAllProductInCart = async (
 ) => {
   const { user_id } = req.params;
   const cart = await Cart.find({ user_id: user_id });
+  // console.log(cart);
+  
   const products = cart[0].products;
 
   return res.status(HTTP_STATUS.OK).json({
@@ -42,7 +44,7 @@ export const addProductToCard = async (
     user_id: user_id,
     "products._id": _id,
   });
-  console.log(productExistInCart);
+
   
   if (!productExistInCart || productExistInCart.length === 0) {
     // neu san pham chua ton tai, them san pham vao products []
@@ -51,7 +53,7 @@ export const addProductToCard = async (
       addedAt: new Date(),
       updatedAt: new Date(),
     };
-    console.log(productAddToCart);
+  
     
     
 
@@ -88,3 +90,5 @@ export const addProductToCard = async (
     message: "Thêm sản phẩm thành công",
   });
 };
+
+

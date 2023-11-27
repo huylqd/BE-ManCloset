@@ -106,8 +106,21 @@ export const refeshToken = async (req, res) => {
 }
 
 export const getAllUser = async (req, res) => {
+    const {
+        _page = 1,
+        _limit = _page == 0 ? 10000000 : 5,
+        _sort = "createdAt",
+        _order = "asc",
+        _expand,
+        _keywords,
+      } = req.query;
+      const options: any = {
+        page: _page,
+        limit: _limit,
+        sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+      };
     try {
-        const user = await User.find({})
+        const user = await User.paginate({},options)
         if (user.length === 0) {
             res.status(200).json({
                 message: "No have result"
@@ -115,7 +128,13 @@ export const getAllUser = async (req, res) => {
         }
         res.status(200).json({
             message: "Get All User Successfully",
-            data: user
+            data: user.docs,
+            paginate :{
+                currentPage: user.page,
+                totalPages: user.totalPages,
+                totalItems: user.totalDocs,
+                limit:user.limit
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -301,3 +320,16 @@ export const updateUser = async (req:any,res:any) => {
           });
     }
     }
+
+
+  export const deleteUser = async (req, res) => {
+        
+    }
+
+   export const lockUser = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+   }

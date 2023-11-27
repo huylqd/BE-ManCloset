@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { IUser } from "../interface/user";
-
+import mongoosePaginate from "mongoose-paginate-v2";
 const addressSchema = new mongoose.Schema(
   {
     city: String,
@@ -43,5 +43,9 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     default: "member"
   },
 });
-
-export default mongoose.model("User", userSchema);
+userSchema.plugin(mongoosePaginate)
+const User = mongoose.model<IUser, mongoose.PaginateModel<IUser>>(
+  "Users",
+  userSchema
+);
+export default User
