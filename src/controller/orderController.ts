@@ -6,6 +6,9 @@ import PDFDocument from "pdfkit";
 import User from "../model/user";
 import product from "../model/product";
 import { ProductItem } from "../interface/product";
+import { generateCustomerInformation, generateFooter, generateHeader, generateInvoiceTable, generateTableRow } from "../utils/exportBill";
+import { IOrder } from "../interface/order";
+
 
 export const getAllBill = async (req: Request, res: Response) => {
   try {
@@ -156,8 +159,6 @@ export const exportBill = async (req: Request, res: Response) => {
     const exportCustom: any = await Promise.all(
       bills.map(async (bill) => {
         const user = users.filter((user) => user._id.equals(bill.user_id));
-        // console.log("bill user_id", bill.user_id);
-        // console.log("user bill", user[0].name);
         const userName = user[0].name;
         return { ...bill, userName: userName };
       })
@@ -187,6 +188,7 @@ export const exportBill = async (req: Request, res: Response) => {
           quantity: item?.property?.quantity,
           price: item?.price,
           subTotal: item?.sub_total,
+          description: productItem?.description
         });
       }
       pdfDoc.text(`ID Hóa Đơn: ${bill?._doc?._id}`);
@@ -204,7 +206,7 @@ export const exportBill = async (req: Request, res: Response) => {
           .join(", ")}`
       );
       pdfDoc.text(
-        `Tổng tiền: ${products.map((product) => product.subTotal).join(", ")}`,
+        `Tổng tiền: ${bill?.docs.totalPrice}`,
         { format: { bold: true } }
       );
       pdfDoc.moveDown();
@@ -293,3 +295,62 @@ export const productSold = async (req: Request, res: Response) => {
     return error.message;
   }
 };
+
+
+export const exportBillById = async (req: Request, res: Response) => {
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
+  const bill_id = req.params.bill_id;
+  const bill = await Bill.findById({ _id: bill_id });
+  const user = await User.findById({ _id: bill.user_id });
+  const products: ProductItem[] = [];
+  for (let item of bill.items) {
+    const productItem = await product.findById({ _id: item.product_id });
+    // console.log("product", productItem)
+    if (productItem) {
+      products.push({
+        productName: productItem.productName,
+        size: item.property.size,
+        color: item.property.color,
+        quantity: item.property.quantity,
+        price: item.price,
+        subTotal: item.sub_total,
+        description: productItem.description
+      });
+    }
+  }
+
+
+
+  function createInvoice(invoice: IOrder) {
+    let doc = new PDFDocument({ size: "A4", margin: 50 });
+
+    generateHeader(doc);
+    const invoiceTableTop = 330;
+    generateCustomerInformation(doc, invoice);
+
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+      doc,
+      invoiceTableTop,
+      "Name",
+      "Description",
+      "Unit Cost",
+      "Quantity",
+      "Line Total"
+    );
+    generateInvoiceTable(doc, products, invoice)
+    generateFooter(doc);
+
+    doc.pipe(res);
+    doc.end();
+    // doc.pipe(fs.createWriteStream(path));
+  }
+  createInvoice(bill)
+
+  // return res.status(200).json({
+  //   message: "Danh sách hóa đơn đã được xuất ra tệp PDF",
+  //   data: bill,
+  // });
+
+}

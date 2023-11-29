@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export interface IOrder {
+  _id: mongoose.Types.ObjectId;
   user_id: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shipping_address: string;
