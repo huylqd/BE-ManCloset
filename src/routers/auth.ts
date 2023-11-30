@@ -10,9 +10,9 @@ router.post("/signIn", signIn)
 router.post("/refreshToken", refeshToken)
 router.get("/user",(req, res, next) => {checkPermission(req, res, next, 'admin')}, getAllUser)
 router.get("/user/:id", getOneUser)
-router.put("/addNewAddess/:id", addNewAddess)
-router.put("/user/:userId/address/:addressId", updateAddress)
+router.put("/addNewAddess/:id",(req, res, next) => {checkPermission(req, res, next, 'member')}, addNewAddess)
+router.put("/user/:userId/address/:addressId",(req, res, next) => {checkPermission(req, res, next, 'member')}, updateAddress)
 router.patch("/user/:id",updateUser)
-router.delete("/user/:userId/address/:addressId", deleteAddress)
+router.delete("/user/:userId/address/:addressId",(req, res, next) => {checkPermission(req, res, next, 'member')}, deleteAddress)
 
 export default router

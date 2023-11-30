@@ -4,7 +4,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from "../middleware/checkPermission";
 import Cart from "../model/cart";
+import dotenv from 'dotenv'
 
+dotenv.config()
 export const signUp = async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
@@ -74,8 +76,8 @@ export const signIn = async (req, res) => {
                 message: "Mật khẩu không khớp"
             })
         }
-        const token = jwt.sign({ _id: user._id }, "123456", { expiresIn: "1h" })
-        const refeshToken = jwt.sign({ _id: user._id }, "123456", { expiresIn: "2h" })
+        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "1h" })
+        const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET , { expiresIn: "2h" })
         user.password = undefined;
         res.status(200).json({
             message: "Đăng nhập thành công",
@@ -98,7 +100,7 @@ export const refeshToken = async (req, res) => {
             message: result.message
         });
     }
-    const token = jwt.sign({ _id: result._id }, '123456', { expiresIn: "30d" })
+    const token = jwt.sign({ _id: result._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "30d" })
     res.status(200).json({
         message: "Đăng nhập thành công",
         accessToken: token,

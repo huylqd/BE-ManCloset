@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user";
+import dotenv from 'dotenv'
+
+dotenv.config()
 export const checkPermission = async (req, res, next, requiredRole) => {
     try {
         if (!req.headers.authorization) {
@@ -34,7 +37,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
 };
 
 export const verifyToken = async (data: string) => {
-    const result = await jwt.verify(data, "123456", async (err, payload) => {
+    const result = await jwt.verify(data, process.env.REFESHTOKEN_SECRET , async (err, payload) => {
         if (err) {
             if (err.name === "JsonWebTokenError") {
                 return ({
