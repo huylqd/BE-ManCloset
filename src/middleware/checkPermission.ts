@@ -8,15 +8,20 @@ export const checkPermission = async (req, res, next) => {
         // lấy jwt token từ header
         const token = req.headers.authorization.split(" ")[1];
         const data = await verifyToken(token);
-      
+        console.log(data);
         if (!data.status) {
             return res.json({
                 message: data.message
             });
         }
-        const user = await User.findById(data._id);
-
-        if (user.role != "admin") {
+        const user = await User.findById(data.payload._id);
+        console.log(user);
+        if(user.isBlocked){
+            return res.status(401).json({
+                message: "Tài khoản của bạn đã bị khóa",
+            });
+        }
+        if (user.role !== "admin") {
             return res.status(401).json({
                 message: "Bạn không có quyền để thực hiện hành động này",
             });
@@ -48,3 +53,4 @@ export const verifyToken = async (data: string) => {
     });
     return result
 }
+

@@ -1,6 +1,6 @@
 import Category from "../model/category";
 import { categorySchema } from "../schema/categorySchema";
-
+import unidecode from 'unidecode';
 export const createCategory = async (req: any, res: any) => {
   try {
     res.setHeader("Content-Type", "application/json");
@@ -52,8 +52,11 @@ export const getAllCategory = async (req: any, res: any) => {
     //     item.name.toLowerCase().includes( _keywords)
     //   );
     // };
+  
+// console.log(searchQuery);
+
     const result = await Category.paginate({}, options);
-    console.log("category:", result);
+  
     if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",

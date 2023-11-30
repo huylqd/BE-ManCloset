@@ -13,6 +13,11 @@ const addressSchema = new mongoose.Schema(
     }
   }
 )
+const wishListSchema = new mongoose.Schema({
+  name:{type:String,require:true},
+  imageUrl:{type:String,require:true},
+  price:{type:Number,require:true}
+})
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
   name: {
@@ -37,12 +42,23 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     required: true,
     default: []
   },
-  
+  wishList:{
+    type:[wishListSchema],
+    required:true,
+    default:[]
+  },
+  isBlocked:{
+    type: Boolean,
+    default:false,
+  },
   role: {
     type: String,
     default: "member"
   },
-});
+},
+  { timestamps: true, versionKey: false }
+
+);
 userSchema.plugin(mongoosePaginate)
 const User = mongoose.model<IUser, mongoose.PaginateModel<IUser>>(
   "Users",

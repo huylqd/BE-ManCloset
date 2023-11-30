@@ -9,6 +9,12 @@ type Address = {
   detailAdress: String
   isDefault: Boolean
 }
+type WishList  = {
+  _id?:string,
+  name:string,
+  imageUrl :string,
+  price:number
+}
 export interface IUser {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -16,6 +22,8 @@ export interface IUser {
   password: string;
   confirmPassword: string;
   address: Address[];
+  wishList:WishList[];
+  isBlocked:Boolean;
   phone: number | undefined;
   role: string;
 }
