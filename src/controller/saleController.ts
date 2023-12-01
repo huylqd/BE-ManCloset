@@ -85,7 +85,7 @@ const task = cron.schedule("* * * * *", async () => {
       });
     }
 
-    console.log("Giá giảm giá đã được cập nhật");
+    // console.log("Giá giảm giá đã được cập nhật");
   } catch (error) {
     console.error("Lỗi:", error);
   }

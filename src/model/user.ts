@@ -37,6 +37,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     required: true,
     default: []
   },
+  
   role: {
     type: String,
     default: "member"

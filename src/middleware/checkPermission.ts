@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user";
-export const checkPermission = async (req, res, next) => {
+import dotenv from 'dotenv'
+
+dotenv.config()
+export const checkPermission = async (req, res, next, requiredRole) => {
     try {
         if (!req.headers.authorization) {
             throw new Error("Bạn phải đăng nhập để thực hiện hành động này");
@@ -8,15 +11,20 @@ export const checkPermission = async (req, res, next) => {
         // lấy jwt token từ header
         const token = req.headers.authorization.split(" ")[1];
         const data = await verifyToken(token);
-      
+        console.log(data);
+        
+        const id = data.payload
+        console.log(id);
+        
         if (!data.status) {
             return res.json({
                 message: data.message
             });
         }
-        const user = await User.findById(data._id);
-
-        if (user.role != "admin") {
+        const user = await User.findById(id);
+        console.log(user);
+        
+        if (!user || (requiredRole && user.role !== requiredRole)) {
             return res.status(401).json({
                 message: "Bạn không có quyền để thực hiện hành động này",
             });
@@ -29,7 +37,7 @@ export const checkPermission = async (req, res, next) => {
 };
 
 export const verifyToken = async (data: string) => {
-    const result = await jwt.verify(data, "123456", async (err, payload) => {
+    const result = await jwt.verify(data, process.env.REFESHTOKEN_SECRET , async (err, payload) => {
         if (err) {
             if (err.name === "JsonWebTokenError") {
                 return ({
