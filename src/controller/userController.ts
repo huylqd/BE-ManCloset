@@ -1,5 +1,5 @@
 import User from "../model/user";
-import { signUpSchema, signInSchema } from "../schema/userSchema";
+import { signUpSchema, signInSchema, userSchema } from "../schema/userSchema";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import { verifyToken } from "../middleware/checkPermission";
@@ -68,6 +68,9 @@ export const signIn = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "Tài khoản không tồn tại" })
         }
+        if (user.isBlocked) {
+            return res.status(400).json({ message: "Tài khoản tạm thời bị khóa" })
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
@@ -108,16 +111,38 @@ export const refeshToken = async (req, res) => {
 }
 
 export const getAllUser = async (req, res) => {
+    const {
+        _page = 1,
+        _limit = _page == 0 ? 10000000 : 5,
+        _sort = "role",
+        _order = "asc",
+        _expand,
+        _keywords,
+      } = req.query;
+      const options: any = {
+        page: _page,
+        limit: _limit,
+        sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+      };
     try {
-        const user = await User.find({})
+        
+        
+        const user = await User.paginate({},options)
         if (user.length === 0) {
             res.status(200).json({
                 message: "No have result"
             })
         }
+        
         res.status(200).json({
             message: "Get All User Successfully",
-            data: user
+            data: user.docs,
+            paginate :{
+                currentPage: user.page,
+                totalPages: user.totalPages,
+                totalItems: user.totalDocs,
+                limit:user.limit
+            }
         })
     } catch (error) {
         return res.status(500).json({
@@ -303,3 +328,143 @@ export const updateUser = async (req:any,res:any) => {
           });
     }
     }
+
+
+  export const deleteUser = async (req, res) => {
+        
+    }
+
+   export const lockUser = async (req, res) => {
+    try {
+        const { error } = userSchema.validate(req.body);
+        if (error) {
+          console.log("error", error);
+          return res.status(400).json({
+            message: error.details[0].message,
+          });
+        }
+        const {userId} = req.params
+   
+        const lockByUser = await User.findById(userId);
+        if(!lockByUser){
+            res.status(404).json({
+                message: "User not found",
+              });
+            }
+        
+        const user = await User.findByIdAndUpdate(
+            userId,
+             { isBlocked: lockByUser.isBlocked ? false : true } ,
+            { new: true } 
+        )
+        if (!user) {
+            res.status(404).json({
+              message: "User not found",    
+            });
+          }
+          res.status(200).json({
+            message:"Khóa người dùng thành công",
+            data:user
+          })
+        
+    } catch (error) {
+        return res.status(500).json({
+            message: error
+        })
+    }
+   }
+
+   export const getWishListByUser = async (req, res) => {
+    try {
+        const id = req.params.userId;
+        const user = await User.findById(id); 
+        if(!user){
+             res.status(404).json({
+                message:"User không tồn tại"
+            })
+        }else{
+             res.status(200).json({
+                message:"Danh sách yêu thích",
+                wishList:user.wishList
+            })
+        }
+    } catch (error) {
+        return    res.status(500).json({
+        message:error
+       })
+    }
+   }
+   export const addRemoveWishLish = async (req, res) => {
+    try {
+        const user = req.user
+        if(!user){
+            return res.status(404).json({
+                message:"Bạn cần đăng nhập để thực hiện chức năng này"
+            })
+        }
+        const itemToAdd = req.body;
+        console.log(itemToAdd);
+        console.log(user);
+        const  {_id}  = req.body;
+            if(_id){
+                user.wishList = user.wishList.filter(item =>item._id.toString() !== _id.toString());
+                // Lưu người dùng với danh sách yêu thích đã được cập nhật
+                const updatedUser = await user.save();
+                res.status(200).json({
+                    message: 'Xóa danh sách yêu thích thành công',
+                    wishList: updatedUser
+                })
+            }else{
+                const existingItem = user.wishList.find(item => item.name === itemToAdd.name);
+                if(existingItem){
+                    res.status(404).json({
+                        message: 'Đã tồn tại trong danh sách yêu thích'
+                    })
+                }else{
+                    user.wishList.push(itemToAdd);
+                    const addWishList = await user.save();
+                    res.status(200).json({
+                        message: "Thêm danh sách yêu thích thành công",
+                        wishList:addWishList
+                    })
+                }
+             
+            }
+           
+        
+       
+    
+    } catch (error) {
+        return res.status(500).json({
+            message:error
+        })
+    }
+   }
+
+   export const removeWishList = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const  {_id}  = req.body;
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({
+              message: 'Người dùng không tồn tại'
+          });
+      }
+      user.wishList = user.wishList.filter(item =>item._id.toString() !== _id.toString());
+    //   console.log(user.wishList);
+      
+      // Lưu người dùng với danh sách yêu thích đã được cập nhật
+      const updatedUser = await user.save();
+   
+      
+    
+        res.status(200).json({
+            message: 'Xóa danh sách yêu thích thành công',
+            wishList: updatedUser
+        })
+        
+    } catch (error) {
+        
+    }
+   }

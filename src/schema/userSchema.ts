@@ -22,6 +22,8 @@ export const signUpSchema = joi.object({
     }),
     address: joi.array(),
     phone: joi.number(),
+    wishList:joi.array(),
+    lock:joi.boolean(),
     role: joi.string()
 })
 
@@ -38,4 +40,16 @@ export const signInSchema = joi.object({
         "string.min": `"password" phải chứa ít nhất {#limit} ký tự`,
         "any.required": `"password" là trường bắt buộc`
     })
+})
+export const userSchema = joi.object({
+    name: joi.string(),
+    email: joi.string(),
+    avater:joi.string(),
+    password: joi.string(),
+    confirmPassword: joi.string(),
+    address: joi.array(),
+    phone: joi.number(),
+    wishList:joi.array(),
+    isBlocked:joi.boolean(),
+    role: joi.string()
 })

@@ -1,6 +1,6 @@
 import Category from "../model/category";
 import { categorySchema } from "../schema/categorySchema";
-
+import unidecode from 'unidecode';
 export const createCategory = async (req: any, res: any) => {
   try {
     res.setHeader("Content-Type", "application/json");
@@ -9,6 +9,13 @@ export const createCategory = async (req: any, res: any) => {
       console.log("error", error);
       return res.status(400).json({
         message: error.details[0].message,
+      });
+    }
+    const { name } = req.body;
+    const categoryExists = await Category.findOne({ name });
+    if (categoryExists) {
+      return res.status(404).json({
+        message: "Danh mục đã tồn tại",
       });
     }
     const category = await Category.create(req.body);
@@ -52,8 +59,8 @@ export const getAllCategory = async (req: any, res: any) => {
     //     item.name.toLowerCase().includes( _keywords)
     //   );
     // };
+// console.log(searchQuery);
     const result = await Category.paginate({}, options);
-    console.log("category:", result);
     if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",

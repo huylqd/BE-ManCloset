@@ -13,6 +13,7 @@ export interface IProduct extends Document {
   properties: property[];
   categoryId: mongoose.Types.ObjectId;
   discount: number;
+  views:number;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
