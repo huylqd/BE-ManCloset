@@ -4,11 +4,12 @@ import {
   addProductToCard,
   getAllProductInCart,
 } from "../controller/cart.controller";
+import { checkPermission } from "../middleware/checkPermission";
 
 const router = express.Router();
 
 // get all product cart
-router.get("/cart/:user_id", wrapRequestHandler(getAllProductInCart));
+router.get("/cart",(req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(getAllProductInCart));
 
 // add to cart
 router.post("/cart/add-to-cart", wrapRequestHandler(addProductToCard));

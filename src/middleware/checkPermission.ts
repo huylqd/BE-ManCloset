@@ -3,6 +3,7 @@ import User from "../model/user";
 import dotenv from 'dotenv'
 
 dotenv.config()
+const {ACCESSTOKEN_SECRET} = process.env
 export const checkPermission = async (req, res, next, requiredRole) => {
     try {
         if (!req.headers.authorization) {
@@ -12,7 +13,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
         const token = req.headers.authorization.split(" ")[1];
         const data = await verifyToken(token);
         console.log("duydeptrai",data);
-        if(!data.status){
+        if(!data.status){   
             return res.status(401).json({
                 message: data.message,
             });
@@ -44,7 +45,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
 };
 
 export const verifyToken = async (data: string) => {
-    const result = await jwt.verify(data, process.env.REFESHTOKEN_SECRET , async (err, payload) => {
+    const result = await jwt.verify(data, ACCESSTOKEN_SECRET , async (err, payload) => {
         if (err) {
             if (err.name === "JsonWebTokenError") {
                 return ({

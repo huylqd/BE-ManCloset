@@ -9,12 +9,12 @@ import Cart from "../model/cart";
  * @header: {user_id}
  */
 export const getAllProductInCart = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
-  const { user_id } = req.params;
-  const cart = await Cart.find({ user_id: user_id });
+  const {_id} = req.user;
+  const cart = await Cart.find({ user_id: _id });
   // console.log(cart);
   
   const products = cart[0].products;

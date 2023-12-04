@@ -162,7 +162,7 @@ export const FilterProductByPrice = async (req, res) => {
       products.sort((a, b) => a.price - b.price);
     }
     return res.status(200).json({
-      message: "thành công",
+      message: "Lấy sản phẩm thành công",
       data: products,
     });
   } catch (error) {
@@ -175,7 +175,20 @@ export const FilterProductByPrice = async (req, res) => {
 export const FilterProductBySize = async (req, res) => {
   try {
     const { size } = req.params;
-    const filteredProducts = await Product.find({ size: size });
+    const filteredProducts = await Product.find({
+      'properties': {
+        $elemMatch: {
+          'variants': {
+            $elemMatch: { 'size': size }
+          }
+        }
+      }
+    });
+    if(filteredProducts.length === 0){
+      return res.status(404).json({ 
+        message:"Không có sản phẩm nào bạn muốn tìm"
+      })
+    }
     return res.status(200).json({
       message: "Lọc sản phẩm thành công",
       data: filteredProducts,

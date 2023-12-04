@@ -7,6 +7,7 @@ import Cart from "../model/cart";
 import dotenv from 'dotenv'
 
 dotenv.config()
+
 export const signUp = async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
@@ -71,9 +72,7 @@ export const signIn = async (req, res) => {
         if (user.isBlocked) {
             return res.status(400).json({ message: "Tài khoản tạm thời bị khóa" })
         }
-
         const isMatch = await bcrypt.compare(password, user.password);
-
         if (!isMatch) {
             return res.status(400).json({
                 message: "Mật khẩu không khớp"
