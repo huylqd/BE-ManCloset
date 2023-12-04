@@ -24,6 +24,10 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     type: Schema.Types.String,
     maxLength: 255,
   },
+  avatar:{
+    type:String,
+    require:true
+  },
   email: {
     type: String,
     required: true,
@@ -41,6 +45,10 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     type: [addressSchema],
     required: true,
     default: []
+  },
+  phone:{
+    type:Number,
+    
   },
   wishList:{
     type:[wishListSchema],

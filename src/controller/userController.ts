@@ -77,8 +77,8 @@ export const signIn = async (req, res) => {
                 message: "Mật khẩu không khớp"
             })
         }
-        const token = jwt.sign({ _id: user._id }, "123456", { expiresIn: "30s" })
-        const refeshToken = jwt.sign({ _id: user._id }, "123456", { expiresIn: "45s" })
+        const token = jwt.sign({ _id: user._id }, "123456", { expiresIn: "1h" })
+        const refeshToken = jwt.sign({ _id: user._id }, "123456", { expiresIn: "2h" })
         user.password = undefined;
         res.status(200).json({
             message: "Đăng nhập thành công",
@@ -101,10 +101,10 @@ export const refeshToken = async (req, res) => {
             message: result.message
         });
     }
-    const token = jwt.sign({ _id: result._id }, '123456', { expiresIn: "30s" })
+    const token = jwt.sign({ _id: result._id }, '123456', { expiresIn: "30d" })
     res.status(200).json({
         message: "Đăng nhập thành công",
-        data: token,
+        accessToken: token,
     });
 }
 
@@ -123,6 +123,8 @@ export const getAllUser = async (req, res) => {
         sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
       };
     try {
+        
+        
         const user = await User.paginate({},options)
         if (user.length === 0) {
             res.status(200).json({
@@ -392,15 +394,16 @@ export const updateUser = async (req:any,res:any) => {
    }
    export const addRemoveWishLish = async (req, res) => {
     try {
-        const id = req.params.userId
+        const user = req.user
+        if(!user){
+            return res.status(404).json({
+                message:"Bạn cần đăng nhập để thực hiện chức năng này"
+            })
+        }
         const itemToAdd = req.body;
+        console.log(itemToAdd);
+        console.log(user);
         const  {_id}  = req.body;
-        const user = await User.findById(id);
-        if (!user) {
-             res.status(404).json({
-                message: 'Người dùng không tồn tại'
-            });
-        }else{
             if(_id){
                 user.wishList = user.wishList.filter(item =>item._id.toString() !== _id.toString());
                 // Lưu người dùng với danh sách yêu thích đã được cập nhật
@@ -426,7 +429,7 @@ export const updateUser = async (req:any,res:any) => {
              
             }
            
-        }
+        
        
     
     } catch (error) {

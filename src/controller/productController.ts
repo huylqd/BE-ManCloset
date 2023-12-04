@@ -7,7 +7,7 @@ import { productSchema } from "../schema/productSchema";
 export const getAllProduct = async (req: any, res: any) => {
   const {
     _page = 1,
-    _limit = _page == 0 ? 10000000 : 2,
+    _limit = _page == 0 ? 10000000 : 8,
     _sort = "createdAt",
     _order = "asc",
     _expand,
@@ -38,22 +38,15 @@ export const getProductById = async (req: Request, res: Response) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) throw new Error("Product not found");
+    product.views++;
+    await product.save();
     return res.status(200).json({ data: product });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
 };
 
-export const getProductByCategoryId = async (req: Request, res: Response ) => {
-  try {
-    const {categoryId} = req.params;
-    const product = await Product.find({categoryId: categoryId});
-    if (!product) throw new Error("Product not found");
-    return res.status(200).json({ data: product });
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
-};
+
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
@@ -149,4 +142,62 @@ export const removeProduct = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+// Start filter Product
+export const FilterProductByPrice = async (req, res) => {
+  const { minPrice, maxPrice, sortType } = req.query;
+  try {
+    let products = await Product.find({
+      price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
+    });
+    if (products.length === 0) {
+      return res.status(404).json({
+        message: "Không có sản phẩm bạn muốn tìm",
+      });
+    }
+    if (sortType === "desc") {
+      products.sort((a, b) => b.price - a.price);
+    } else {
+      products.sort((a, b) => a.price - b.price);
+    }
+    return res.status(200).json({
+      message: "thành công",
+      data: products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+// Lọc sản phẩm theo size
+export const FilterProductBySize = async (req, res) => {
+  try {
+    const { size } = req.params;
+    const filteredProducts = await Product.find({ size: size });
+    return res.status(200).json({
+      message: "Lọc sản phẩm thành công",
+      data: filteredProducts,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+export const getProductByCategoryId = async (req: Request, res: Response ) => {
+  try {
+    const {categoryId} = req.params;
+    const product = await Product.find({categoryId: categoryId});
+    if (!product) throw new Error("Product not found");
+    return res.status(200).json({ data: product });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+
+
+// End
 

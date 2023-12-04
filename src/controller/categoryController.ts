@@ -11,6 +11,13 @@ export const createCategory = async (req: any, res: any) => {
         message: error.details[0].message,
       });
     }
+    const { name } = req.body;
+    const categoryExists = await Category.findOne({ name });
+    if (categoryExists) {
+      return res.status(404).json({
+        message: "Danh mục đã tồn tại",
+      });
+    }
     const category = await Category.create(req.body);
     if (category) {
       return res.status(201).json({
@@ -52,11 +59,8 @@ export const getAllCategory = async (req: any, res: any) => {
     //     item.name.toLowerCase().includes( _keywords)
     //   );
     // };
-  
 // console.log(searchQuery);
-
     const result = await Category.paginate({}, options);
-  
     if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",

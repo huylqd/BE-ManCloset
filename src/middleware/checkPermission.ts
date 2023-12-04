@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user";
-export const checkPermission = async (req, res, next) => {
+export const checkPermission = async (req, res, next, requiredRole) => {
     try {
         if (!req.headers.authorization) {
             throw new Error("Bạn phải đăng nhập để thực hiện hành động này");
@@ -8,20 +8,27 @@ export const checkPermission = async (req, res, next) => {
         // lấy jwt token từ header
         const token = req.headers.authorization.split(" ")[1];
         const data = await verifyToken(token);
-        console.log(data);
+        console.log("duydeptrai",data);
+        if(!data.status){
+            return res.status(401).json({
+                message: data.message,
+            });
+        }
+        const id = data.payload 
+        
         if (!data.status) {
             return res.json({
                 message: data.message
             });
         }
-        const user = await User.findById(data.payload._id);
+        const user = await User.findById(id);
         console.log(user);
         if(user.isBlocked){
             return res.status(401).json({
                 message: "Tài khoản của bạn đã bị khóa",
             });
         }
-        if (user.role !== "admin") {
+        if (!user || (requiredRole && user.role !== requiredRole)) {
             return res.status(401).json({
                 message: "Bạn không có quyền để thực hiện hành động này",
             });

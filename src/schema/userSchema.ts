@@ -44,6 +44,7 @@ export const signInSchema = joi.object({
 export const userSchema = joi.object({
     name: joi.string(),
     email: joi.string(),
+    avater:joi.string(),
     password: joi.string(),
     confirmPassword: joi.string(),
     address: joi.array(),
