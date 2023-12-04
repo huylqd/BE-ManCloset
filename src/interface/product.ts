@@ -35,4 +35,5 @@ export interface ProductItem {
   quantity: number;
   price: number;
   subTotal: number;
+  description: string;
 }

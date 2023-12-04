@@ -19,9 +19,10 @@ router.patch("/user/wishlist",(req, res, next) => {checkPermission(req, res, nex
 // Khóa người dùng
 router.patch("/user/:userId/lock",lockUser)
 // 
-router.put("/addNewAddess/:id", addNewAddess)
-router.put("/user/:userId/address/:addressId", updateAddress)
+
+router.put("/addNewAddess/:id",(req, res, next) => {checkPermission(req, res, next, 'member')}, addNewAddess)
+router.put("/user/:userId/address/:addressId",(req, res, next) => {checkPermission(req, res, next, 'member')}, updateAddress)
 router.patch("/user/:id",updateUser)
-router.delete("/user/:userId/address/:addressId", deleteAddress)
+router.delete("/user/:userId/address/:addressId",(req, res, next) => {checkPermission(req, res, next, 'member')}, deleteAddress)
 
 export default router
