@@ -11,16 +11,36 @@ import { IOrder } from "../interface/order";
 
 
 export const getAllBill = async (req: Request, res: Response) => {
+  const {
+    _page = 1,
+    _limit = Number(_page) == 0 ? 10000000 : 2,
+    _sort = "createdAt",
+    _order = "asc",
+    _expand,
+  } = req.query;
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+  };
   try {
-    const bills = await Bill.find();
-    if (bills.length === 0) {
+    const result = await Bill.paginate({}, options);
+
+
+    if (result.docs.length === 0) {
       return res.status(400).json({
         message: "Không có phiếu đặt hàng nào",
       });
     }
     return res.status(200).json({
       message: "Danh sách phiếu đặt hàng",
-      data: bills,
+      data: result.docs,
+      paginate: {
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalItems: result.totalDocs,
+        limit: result.limit
+      },
     });
   } catch (error) {
     return res.status(404).json({
@@ -84,17 +104,17 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
   };
   try {
     const id = req.params.userId;
-    const bill = await Bill.paginate({ user_id: id },options)
+    const bill = await Bill.paginate({ user_id: id }, options)
 
     if (!bill) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
       });
     }
     return res.status(200).json({
       message: "Đơn hàng của bạn đây",
       data: bill.docs,
-      paginate:{
+      paginate: {
         currentPage: bill.page,
         totalPages: bill.totalPages,
         totalItems: bill.totalDocs,
