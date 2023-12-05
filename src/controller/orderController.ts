@@ -7,7 +7,7 @@ import User from "../model/user";
 import product from "../model/product";
 import { ProductItem } from "../interface/product";
 import { generateCustomerInformation, generateFooter, generateHeader, generateInvoiceTable, generateTableRow } from "../utils/exportBill";
-import { IOrder } from "../interface/order";
+import { IOrder, IOrderItem } from "../interface/order";
 
 
 export const getAllBill = async (req: Request, res: Response) => {
@@ -335,13 +335,40 @@ export const productSold = async (req: Request, res: Response) => {
 export const exportBillById = async (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
-  const bill_id = req.params.bill_id;
-  const bill = await Bill.findById({ _id: bill_id });
-  const user = await User.findById({ _id: bill.user_id });
+  try {
+    const bill_id = req.params.bill_id;
+    const bill = await getBillInfo(bill_id);
+
+    if (bill) {
+      const user = await getUserInfo(String(bill.user_id));
+      if (user) {
+        bill.userName = user.name;
+      }
+
+      const products = await getProductsInfo(bill.items);
+
+      createInvoice(res, bill, products);
+    } else {
+      throw new Error('Bill not found');
+    }
+  } catch (error) {
+    console.error('Error exporting bill:', error);
+    return res.status(500).json({ error: 'Error exporting bill' });
+  }
+};
+
+async function getBillInfo(bill_id: string) {
+  return await Bill.findById({ _id: bill_id }).lean();
+}
+
+async function getUserInfo(user_id: string | undefined) {
+  return await User.findById({ _id: user_id });
+}
+
+async function getProductsInfo(items: IOrderItem[]) {
   const products: ProductItem[] = [];
-  for (let item of bill.items) {
+  const promises = items.map(async (item) => {
     const productItem = await product.findById({ _id: item.product_id });
-    // console.log("product", productItem)
     if (productItem) {
       products.push({
         productName: productItem.productName,
@@ -350,42 +377,33 @@ export const exportBillById = async (req: Request, res: Response) => {
         quantity: item.property.quantity,
         price: item.price,
         subTotal: item.sub_total,
-        description: productItem.description
+        description: productItem.description,
       });
     }
-  }
+  });
+  await Promise.all(promises);
+  return products;
+}
 
+function createInvoice(res: Response, bill: any, products: ProductItem[]) {
+  let doc = new PDFDocument({ size: "A4", margin: 50 });
 
+  generateHeader(doc);
+  const invoiceTableTop = 330;
+  generateCustomerInformation(doc, bill);
 
-  function createInvoice(invoice: IOrder) {
-    let doc = new PDFDocument({ size: "A4", margin: 50 });
+  doc.font("Helvetica-Bold");
+  generateTableRow(
+    doc,
+    invoiceTableTop,
+    "Name",
+    "Unit Cost",
+    "Quantity",
+    "Line Total"
+  );
+  generateInvoiceTable(doc, products, bill);
+  generateFooter(doc);
 
-    generateHeader(doc);
-    const invoiceTableTop = 330;
-    generateCustomerInformation(doc, invoice);
-
-    doc.font("Helvetica-Bold");
-    generateTableRow(
-      doc,
-      invoiceTableTop,
-      "Name",
-      "Description",
-      "Unit Cost",
-      "Quantity",
-      "Line Total"
-    );
-    generateInvoiceTable(doc, products, invoice)
-    generateFooter(doc);
-
-    doc.pipe(res);
-    doc.end();
-    // doc.pipe(fs.createWriteStream(path));
-  }
-  createInvoice(bill)
-
-  // return res.status(200).json({
-  //   message: "Danh sách hóa đơn đã được xuất ra tệp PDF",
-  //   data: bill,
-  // });
-
+  doc.pipe(res);
+  doc.end();
 }

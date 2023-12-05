@@ -11,6 +11,7 @@ export interface IOrder {
   id_transaction: String;
   createdAt: Date;
   updatedAt: Date;
+  userName?: string
 }
 export enum OrderStatus {
   Processing = "Đang xử lý",
@@ -32,7 +33,7 @@ export interface IOrderItem {
     quantity: number;
     color: string;
     size: string;
-    imageUrl:string
+    imageUrl: string
   };
   price: number;
   sub_total: number;
