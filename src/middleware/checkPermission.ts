@@ -19,12 +19,6 @@ export const checkPermission = async (req, res, next, requiredRole) => {
             });
         }
         const id = data.payload 
-        
-        if (!data.status) {
-            return res.json({
-                message: data.message
-            });
-        }
         const user = await User.findById(id);
         console.log(user);
         if(user.isBlocked){

@@ -1,4 +1,5 @@
 import Category from "../model/category";
+import Product from "../model/product";
 import { categorySchema } from "../schema/categorySchema";
 import unidecode from 'unidecode';
 export const createCategory = async (req: any, res: any) => {
@@ -151,7 +152,25 @@ export const removeCategory = async (req: any, res: any) => {
         message: "Category not found",
       });
     }
-
+    const productsToUpdate = await Product.find({categoryId:id})
+    console.log(productsToUpdate);
+    
+    const newCategoryId = '6568b320bc25a52be604b19f';
+    let newCategory = await Category.findById(newCategoryId);
+    console.log('newCategory',newCategory);
+    
+    // if (!newCategory) {
+    
+    //   newCategory = new Category({
+    //     // Thêm thông tin mới cho danh mục mới nếu cần
+    //     name: 'New Category Name', // Thay bằng thông tin thực tế
+    //   });
+    //   await newCategory.save();
+    // }
+    const updatedProducts = await Promise.all(productsToUpdate.map(async (product:any) => {
+      newCategory.products.push(product)
+      return await newCategory.save();
+    }));
     const removedCategory = await Category.findByIdAndDelete(id);
     res.status(201).json({
       message: "Category remove successfully",

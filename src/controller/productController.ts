@@ -148,8 +148,28 @@ export const removeProduct = async (req: Request, res: Response) => {
 export const FilterProductByPrice = async (req, res) => {
   const { minPrice, maxPrice, sortType } = req.query;
   try {
+    if(minPrice && maxPrice) {
+      let products = await Product.find({
+        price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
+      });
+      if (products.length === 0) {
+        return res.status(404).json({
+          message: "Không có sản phẩm bạn muốn tìm",
+        });
+      }
+      if (sortType === "desc") {
+        products.sort((a, b) => b.price - a.price);
+      } else {
+        products.sort((a, b) => a.price - b.price);
+      }
+      return res.status(200).json({
+        message: "Lấy sản phẩm thành công",
+        data: products,
+      });
+    }
+    if(minPrice ){
     let products = await Product.find({
-      price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
+      price: { $lte: Number(minPrice) },
     });
     if (products.length === 0) {
       return res.status(404).json({
@@ -165,6 +185,28 @@ export const FilterProductByPrice = async (req, res) => {
       message: "Lấy sản phẩm thành công",
       data: products,
     });
+    }
+    if(maxPrice){
+      let products = await Product.find({
+        price: {  $gte: Number(maxPrice) },
+      });
+      if (products.length === 0) {
+        return res.status(404).json({
+          message: "Không có sản phẩm bạn muốn tìm",
+        });
+      }
+      if (sortType === "desc") {
+        products.sort((a, b) => b.price - a.price);
+      } else {
+        products.sort((a, b) => a.price - b.price);
+      }
+      return res.status(200).json({
+        message: "Lấy sản phẩm thành công",
+        data: products,
+      });
+    }
+   
+    
   } catch (error) {
     return res.status(500).json({
       message: error.message,
@@ -199,6 +241,7 @@ export const FilterProductBySize = async (req, res) => {
     });
   }
 };
+// Lấy sản phẩm theo categoryId
 export const getProductByCategoryId = async (req: Request, res: Response ) => {
   try {
     const {categoryId} = req.params;
