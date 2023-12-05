@@ -105,7 +105,6 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
   try {
     const id = req.params.userId;
     const bill = await Bill.paginate({ user_id: id }, options)
-
     if (!bill) {
       return res.status(404).json({
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
@@ -118,7 +117,7 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
         currentPage: bill.page,
         totalPages: bill.totalPages,
         totalItems: bill.totalDocs,
-      }
+      },
     });
   } catch (error) {
     return res.status(500).json({
@@ -289,6 +288,7 @@ export const productSold = async (req: Request, res: Response) => {
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(endOfWeek.getDate() + 6); // Ngày cuối tuần (thứ bảy)
   try {
+    //tìm sản phẩm bán chạy nhất
     const result = await Bill.aggregate([
       {
         $match: {
@@ -407,3 +407,44 @@ function createInvoice(res: Response, bill: any, products: ProductItem[]) {
   doc.pipe(res);
   doc.end();
 }
+export const Thongkedoanhso = async (req: Request, res: Response) => {
+  try {
+    //tìm sản phẩm bán chạy nhất
+    const result = await Bill.aggregate([
+      {
+        $unwind: "$items",
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" }, // Lấy tháng từ trường createdAt
+            year: { $year: "$createdAt" }, // Lấy năm từ trường createdAt
+          },
+
+          totalAmountSold: { $sum: "$items.sub_total" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id.month",
+          year: "$_id.year",
+
+          totalAmountSold: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1, // Sắp xếp theo năm tăng dần
+          month: 1, // Sắp xếp theo tháng tăng dần
+        },
+      },
+    ]).exec();
+    return res.status(200).json({
+      message: "Doanh thu",
+      data: result,
+    });
+  } catch (error) {
+    return error.message;
+  }
+};
