@@ -69,9 +69,9 @@ export function generateCustomerInformation(doc, invoice: IOrder) {
         )
 
         .font("Helvetica-Bold")
-        .text(invoice.user_id, 300, customerInformationTop)
+        .text(`UserName: ${invoice?.userName}`, 300, customerInformationTop)
         .font("Helvetica-Bold")
-        .text(invoice.shipping_address, 300, customerInformationTop + 15)
+        .text(`Address: ${invoice.shipping_address}`, 300, customerInformationTop + 15)
 
         .moveDown();
 
@@ -83,7 +83,6 @@ export function generateTableRow(
     doc,
     y,
     item,
-    description,
     unitCost,
     quantity,
     lineTotal
@@ -91,7 +90,6 @@ export function generateTableRow(
     doc
         .fontSize(10)
         .text(item, 50, y, { with: 200, height: 100 })
-        .text(description, 150, y, { with: 200, height: 100 })
         .text(unitCost, 280, y, { width: 90, align: "right", height: 100 })
         .text(quantity, 370, y, { width: 90, align: "right", height: 100 })
         .text(lineTotal, 0, y, { align: "right", height: 100 });
@@ -109,7 +107,6 @@ export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
             doc,
             position,
             item.productName,
-            item.description,
             formatCurrency(item.subTotal / item.quantity),
             item.quantity,
             formatCurrency(item.subTotal)
@@ -122,7 +119,6 @@ export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
     generateTableRow(
         doc,
         subtotalPosition,
-        "",
         "",
         "Subtotal",
         "",
