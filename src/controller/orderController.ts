@@ -323,7 +323,7 @@ export const Thongkedoanhso = async (req: Request, res: Response) => {
             month: { $month: "$createdAt" }, // Lấy tháng từ trường createdAt
             year: { $year: "$createdAt" }, // Lấy năm từ trường createdAt
           },
-          totalQuantitySold: { $sum: "$items.property.quantity" },
+
           totalAmountSold: { $sum: "$items.sub_total" },
         },
       },
@@ -332,7 +332,7 @@ export const Thongkedoanhso = async (req: Request, res: Response) => {
           _id: 0,
           month: "$_id.month",
           year: "$_id.year",
-          totalQuantitySold: 1,
+
           totalAmountSold: 1,
         },
       },
