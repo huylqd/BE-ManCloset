@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  Thongkedoanhso,
   billHistoryById,
   billHistoryByUserId,
   createBill,
@@ -17,5 +18,6 @@ router.get("/order/export", exportBill);
 router.get("/order/user/:userId", billHistoryByUserId);
 router.post("/order", createBill);
 router.patch("/order/:id", updateBill);
-router.get("/analyst", productSold);
+router.get("/analyst/product", productSold);
+router.get("/analyst/doanhthu", Thongkedoanhso);
 export default router;
