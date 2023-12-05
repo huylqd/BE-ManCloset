@@ -7,20 +7,40 @@ import User from "../model/user";
 import product from "../model/product";
 import { ProductItem } from "../interface/product";
 import { generateCustomerInformation, generateFooter, generateHeader, generateInvoiceTable, generateTableRow } from "../utils/exportBill";
-import { IOrder } from "../interface/order";
+import { IOrder, IOrderItem } from "../interface/order";
 
 
 export const getAllBill = async (req: Request, res: Response) => {
+  const {
+    _page = 1,
+    _limit = Number(_page) == 0 ? 10000000 : 2,
+    _sort = "createdAt",
+    _order = "asc",
+    _expand,
+  } = req.query;
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+  };
   try {
-    const bills = await Bill.find();
-    if (bills.length === 0) {
+    const result = await Bill.paginate({}, options);
+
+
+    if (result.docs.length === 0) {
       return res.status(400).json({
         message: "Không có phiếu đặt hàng nào",
       });
     }
     return res.status(200).json({
       message: "Danh sách phiếu đặt hàng",
-      data: bills,
+      data: result.docs,
+      paginate: {
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalItems: result.totalDocs,
+        limit: result.limit
+      },
     });
   } catch (error) {
     return res.status(404).json({
@@ -84,21 +104,20 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
   };
   try {
     const id = req.params.userId;
-    const bill = await Bill.paginate({ user_id: id },options)
-
+    const bill = await Bill.paginate({ user_id: id }, options)
     if (!bill) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
       });
     }
     return res.status(200).json({
       message: "Đơn hàng của bạn đây",
       data: bill.docs,
-      paginate:{
+      paginate: {
         currentPage: bill.page,
         totalPages: bill.totalPages,
         totalItems: bill.totalDocs,
-      }
+      },
     });
   } catch (error) {
     return res.status(500).json({
@@ -269,6 +288,7 @@ export const productSold = async (req: Request, res: Response) => {
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(endOfWeek.getDate() + 6); // Ngày cuối tuần (thứ bảy)
   try {
+    //tìm sản phẩm bán chạy nhất
     const result = await Bill.aggregate([
       {
         $match: {
@@ -315,13 +335,40 @@ export const productSold = async (req: Request, res: Response) => {
 export const exportBillById = async (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
-  const bill_id = req.params.bill_id;
-  const bill = await Bill.findById({ _id: bill_id });
-  const user = await User.findById({ _id: bill.user_id });
+  try {
+    const bill_id = req.params.bill_id;
+    const bill = await getBillInfo(bill_id);
+
+    if (bill) {
+      const user = await getUserInfo(String(bill.user_id));
+      if (user) {
+        bill.userName = user.name;
+      }
+
+      const products = await getProductsInfo(bill.items);
+
+      createInvoice(res, bill, products);
+    } else {
+      throw new Error('Bill not found');
+    }
+  } catch (error) {
+    console.error('Error exporting bill:', error);
+    return res.status(500).json({ error: 'Error exporting bill' });
+  }
+};
+
+async function getBillInfo(bill_id: string) {
+  return await Bill.findById({ _id: bill_id }).lean();
+}
+
+async function getUserInfo(user_id: string | undefined) {
+  return await User.findById({ _id: user_id });
+}
+
+async function getProductsInfo(items: IOrderItem[]) {
   const products: ProductItem[] = [];
-  for (let item of bill.items) {
+  const promises = items.map(async (item) => {
     const productItem = await product.findById({ _id: item.product_id });
-    // console.log("product", productItem)
     if (productItem) {
       products.push({
         productName: productItem.productName,
@@ -330,42 +377,74 @@ export const exportBillById = async (req: Request, res: Response) => {
         quantity: item.property.quantity,
         price: item.price,
         subTotal: item.sub_total,
-        description: productItem.description
+        description: productItem.description,
       });
     }
-  }
-
-
-
-  function createInvoice(invoice: IOrder) {
-    let doc = new PDFDocument({ size: "A4", margin: 50 });
-
-    generateHeader(doc);
-    const invoiceTableTop = 330;
-    generateCustomerInformation(doc, invoice);
-
-    doc.font("Helvetica-Bold");
-    generateTableRow(
-      doc,
-      invoiceTableTop,
-      "Name",
-      "Description",
-      "Unit Cost",
-      "Quantity",
-      "Line Total"
-    );
-    generateInvoiceTable(doc, products, invoice)
-    generateFooter(doc);
-
-    doc.pipe(res);
-    doc.end();
-    // doc.pipe(fs.createWriteStream(path));
-  }
-  createInvoice(bill)
-
-  // return res.status(200).json({
-  //   message: "Danh sách hóa đơn đã được xuất ra tệp PDF",
-  //   data: bill,
-  // });
-
+  });
+  await Promise.all(promises);
+  return products;
 }
+
+function createInvoice(res: Response, bill: any, products: ProductItem[]) {
+  let doc = new PDFDocument({ size: "A4", margin: 50 });
+
+  generateHeader(doc);
+  const invoiceTableTop = 330;
+  generateCustomerInformation(doc, bill);
+
+  doc.font("Helvetica-Bold");
+  generateTableRow(
+    doc,
+    invoiceTableTop,
+    "Name",
+    "Unit Cost",
+    "Quantity",
+    "Line Total"
+  );
+  generateInvoiceTable(doc, products, bill);
+  generateFooter(doc);
+
+  doc.pipe(res);
+  doc.end();
+}
+export const Thongkedoanhso = async (req: Request, res: Response) => {
+  try {
+    //tìm sản phẩm bán chạy nhất
+    const result = await Bill.aggregate([
+      {
+        $unwind: "$items",
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" }, // Lấy tháng từ trường createdAt
+            year: { $year: "$createdAt" }, // Lấy năm từ trường createdAt
+          },
+
+          totalAmountSold: { $sum: "$items.sub_total" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id.month",
+          year: "$_id.year",
+
+          totalAmountSold: 1,
+        },
+      },
+      {
+        $sort: {
+          year: 1, // Sắp xếp theo năm tăng dần
+          month: 1, // Sắp xếp theo tháng tăng dần
+        },
+      },
+    ]).exec();
+    return res.status(200).json({
+      message: "Doanh thu",
+      data: result,
+    });
+  } catch (error) {
+    return error.message;
+  }
+};
