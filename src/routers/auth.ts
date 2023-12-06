@@ -9,7 +9,7 @@ router.use(express.json());
 router.post("/signup", signUp)
 router.post("/signIn", signIn)
 router.post("/refreshToken", refeshToken)
-router.get("/user", getAllUser)
+router.get("/user",(req, res, next) => { checkPermission(req, res, next, 'member') }, getAllUser)
 router.get("/user/:id", getOneUser)
 // Danh sách yêu thích
 router.get("/user/:userId/wishlist", getWishListByUser)
