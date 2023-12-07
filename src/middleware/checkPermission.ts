@@ -37,7 +37,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
 };
 
 export const verifyToken = async (data: string) => {
-    const result = await jwt.verify(data, process.env.REFESHTOKEN_SECRET , async (err, payload) => {
+    const result = await jwt.verify(data, process.env.ACCESSTOKEN_SECRET , async (err, payload) => {
         if (err) {
             if (err.name === "JsonWebTokenError") {
                 return ({

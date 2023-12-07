@@ -3,14 +3,28 @@ import { IUser } from "../interface/user";
 
 const addressSchema = new mongoose.Schema(
   {
-    city: String,
-    district: String,
-    wards: String,
-    detailAdress: String,
+    city: {
+      type: String, 
+      required: true
+    },
+    district: {
+      type: String, 
+      required: true
+    },
+    wards: {
+      type: String, 
+      required: true
+    },
+    detailAddress: {
+      type: String, 
+      required: false
+    },
     isDefault: {
       type:Boolean,
       default: false
     }
+  },{
+    versionKey: false
   }
 )
 
