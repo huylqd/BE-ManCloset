@@ -3,7 +3,7 @@ import User from "../model/user";
 import dotenv from 'dotenv'
 
 dotenv.config()
-const {ACCESSTOKEN_SECRET} = process.env
+const {ACCESSTOKEN_SECRET, REFESHTOKEN_SECRET} = process.env
 export const checkPermission = async (req, res, next, requiredRole) => {
     try {
         if (!req.headers.authorization) {
@@ -50,6 +50,27 @@ export const verifyToken = async (data: string) => {
             if (err.name === "TokenExpiredError") {
                 return ({
                     message: "Token hết hạn",
+                    status: false
+                })
+            }
+        }
+        return { payload, status: true }
+    });
+    return result
+}
+
+export const verifyRefreshToken = async (data: string) => {
+    const result = await jwt.verify(data, REFESHTOKEN_SECRET , async (err, payload) => {
+        if (err) {
+            if (err.name === "JsonWebTokenError") {
+                return ({
+                    message: "Token không hợp lệ",
+                    status: false
+                });
+            }
+            if (err.name === "TokenExpiredError") {
+                return ({
+                    message: "Refresh Token hết hạn",
                     status: false
                 })
             }

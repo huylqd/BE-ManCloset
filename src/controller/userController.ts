@@ -2,7 +2,7 @@ import User from "../model/user";
 import { signUpSchema, signInSchema, userSchema } from "../schema/userSchema";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
-import { verifyToken } from "../middleware/checkPermission";
+import { verifyRefreshToken, verifyToken } from "../middleware/checkPermission";
 import Cart from "../model/cart";
 import dotenv from 'dotenv'
 
@@ -78,7 +78,7 @@ export const signIn = async (req, res) => {
                 message: "Mật khẩu không khớp"
             })
         }
-        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "1h" })
+        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "15s" })
         const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET , { expiresIn: "2h" })
      
         // res.send('success') 
@@ -98,16 +98,18 @@ export const signIn = async (req, res) => {
 }
 
 export const refeshToken = async (req, res) => {
-    const result = await verifyToken(req.body.refreshToken)
+    const result = await verifyRefreshToken(req.body.refreshToken)
+    console.log(result);
+    
     if (!result.status) {
         return res.status(401).json({
             message: result.message
         });
     }
-    const token = jwt.sign({ _id: result._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "30d" })
+    const token = jwt.sign({ _id: result.payload._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "30d" })
     res.status(200).json({
         message: "Đăng nhập thành công",
-        accessToken: token,
+        data: token,
     });
 }
 

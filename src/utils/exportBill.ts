@@ -9,8 +9,8 @@ export function generateHeader(doc) {
         .text("MAN-CLOSET", 110, 57)
         .fontSize(10)
         .text("Man-Closet", 200, 50, { align: "right" })
-        .text("số nhà 110 ngõ 80 xuân phương", 200, 65, { align: "right" })
-        .text("Nam Từ Liêm Hà Nội", 200, 80, { align: "right" })
+        .text(removeAccents("số nhà 110 ngõ 80 xuân phương"), 200, 65, { align: "right" })
+        .text(removeAccents("Nam Từ Liêm Hà Nội"), 200, 80, { align: "right" })
         .moveDown();
 }
 
@@ -33,7 +33,8 @@ export function generateHr(doc, y) {
         .stroke();
 }
 export function formatCurrency(cents: number) {
-    return "$" + (cents / 100).toFixed(2);
+    const resultCost = Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cents);
+    return resultCost
 }
 
 export function formatDate(date: Date) {
@@ -69,9 +70,9 @@ export function generateCustomerInformation(doc, invoice: IOrder) {
         )
 
         .font("Helvetica-Bold")
-        .text(`UserName: ${invoice?.userName}`, 300, customerInformationTop)
+        .text(`UserName: ${removeAccents(invoice?.userName)}`, 300, customerInformationTop)
         .font("Helvetica-Bold")
-        .text(`Address: ${invoice.shipping_address}`, 300, customerInformationTop + 15)
+        .text(`Address: ${removeAccents(invoice.shipping_address)}`, 300, customerInformationTop + 15)
 
         .moveDown();
 
@@ -94,6 +95,13 @@ export function generateTableRow(
         .text(quantity, 370, y, { width: 90, align: "right", height: 100 })
         .text(lineTotal, 0, y, { align: "right", height: 100 });
 }
+export function removeAccents(str: string) {
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+}
 
 
 export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
@@ -106,7 +114,7 @@ export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
         generateTableRow(
             doc,
             position,
-            item.productName,
+            removeAccents(item.productName),
             formatCurrency(item.subTotal / item.quantity),
             item.quantity,
             formatCurrency(item.subTotal)
