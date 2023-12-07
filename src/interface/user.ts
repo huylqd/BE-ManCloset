@@ -26,6 +26,8 @@ export interface IUser {
   wishList:WishList[];
   isBlocked:Boolean;
   phone: number | undefined;
+  googleId:string;
+  authType:string,
   role: string;
 }
 

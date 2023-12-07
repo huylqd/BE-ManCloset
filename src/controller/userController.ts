@@ -80,6 +80,8 @@ export const signIn = async (req, res) => {
         }
         const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "1h" })
         const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET , { expiresIn: "2h" })
+     
+        // res.send('success') 
         user.password = undefined;
         res.status(200).json({
             message: "Đăng nhập thành công",

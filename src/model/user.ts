@@ -63,6 +63,15 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     type: String,
     default: "member"
   },
+    googleId: {
+      type: String,
+      default: null,
+  },
+  authType: {
+    type: String,
+    enum: ['local', 'google', 'facebook'],
+    default: 'local'
+  },
 },
   { timestamps: true, versionKey: false }
 
