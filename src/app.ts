@@ -2,26 +2,64 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import categoryRouter from "./routers/category";
+import couponRouter from "./routers/coupon";
+import saleRouter from "./routers/sale";
+import { isCheckedSale } from "./controller/saleController";
+import VnPayRouter from "./routers/VnPay";
+import orderRouter from "./routers/order";
+import productRouter from "./routers/product";
+import cartRouter from "./routers/cart";
 import dotenv from "dotenv";
+import UserRouter from "./routers/auth";
+import commentRouter from "./routers/comment";
+import passport from "passport";
+import routerPassport from "./routers/passport";
+import session from 'express-session'
+import cookieParser from "cookie-parser";
+//Config express
 const app: any = express();
 dotenv.config();
+const {ACCESSTOKEN_SECRET} = process.env
 app.use(cors());
-app.use(express.json());
-app.use("/", categoryRouter);
-
-const port = 8088;
-const mongoUrl = process.env.MONGODB_URL;
-mongoose.connect(
-  `mongodb://admin:123zXc_@27.118.27.251:27017?authMechanism=DEFAULT`,
-  {
-    dbName: "datn",
-    autoCreate: true,
+app.use(session({
+  secret: ACCESSTOKEN_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+      secure: false,
+      maxAge: 30 * 60 * 1000 // Thời gian hết hạn cho phiên (30 phút)
   }
-);
+}))
+app.use(express.json());
+app.use(cookieParser());
+app.use(passport.initialize());
+app.use(passport.session());
+//Router
+app.use("/api", categoryRouter);
+app.use("/api", couponRouter);
+app.use("/api", productRouter);
+app.use("/order", VnPayRouter);
+app.use("/comment", commentRouter);
+app.use("/api", saleRouter);
+app.use("/", orderRouter);
+app.use("/api",routerPassport)
+app.use("/", UserRouter);
+
+isCheckedSale();
+//Connect DB
+
+app.use("/api", cartRouter);
+
+const mongoUrl = process.env.MONGODB_URL;
+mongoose.connect(mongoUrl, {
+  dbName: "datn",
+  autoCreate: true,
+});
 
 const db = mongoose.connection;
 
 // Set up event listeners for the connection
+const port = 8088;
 db.on("error", (error) => {
   console.error("MongoDB connection error:", error);
 });

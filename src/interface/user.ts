@@ -1,12 +1,34 @@
 import { Request } from "express";
+import mongoose from "mongoose";
 
+type Address = {
+  id: any,
+  city: String,
+  district: String,
+  wards: String,
+  detailAdress: String
+  isDefault: Boolean
+}
+type WishList  = {
+  _id?:string,
+  name:string,
+  imageUrl :string,
+  price:number
+}
 export interface IUser {
-  _id: string;
-  firstName: string;
-  lastName: string;
+  _id: mongoose.Types.ObjectId;
+  name: string;
   email: string;
+  avatar:string;
   password: string;
-  authType: "Google" | "Facebook" | "Defix" | "Local";
+  confirmPassword: string;
+  address: Address[];
+  wishList:WishList[];
+  isBlocked:Boolean;
+  phone: number | undefined;
+  googleId:string;
+  authType:string,
+  role: string;
 }
 
 export interface IRequestWithUser extends Request {

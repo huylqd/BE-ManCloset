@@ -1,0 +1,40 @@
+import mongoose from "mongoose";
+
+export interface IOrder {
+  _id: mongoose.Types.ObjectId;
+  user_id: mongoose.Types.ObjectId;
+  items: IOrderItem[];
+  shipping_address: string;
+  payment_method: string;
+  total_price: number;
+  history_order_status: IHistoryStatus[];
+  id_transaction: String;
+  createdAt: Date;
+  updatedAt: Date;
+  userName?: string
+}
+export enum OrderStatus {
+  Processing = "Đang xử lý",
+  NotPaid = "Chưa thanh toán",
+  Paid = "Đã thanh toán",
+  Delivering = "Đang giao hàng",
+  Received = "Đã nhận",
+  Cancelled = "Đã Hủy",
+}
+
+export interface IHistoryStatus {
+  status: OrderStatus;
+  createdAt: Date;
+}
+
+export interface IOrderItem {
+  product_id: mongoose.Types.ObjectId;
+  property: {
+    quantity: number;
+    color: string;
+    size: string;
+    imageUrl: string
+  };
+  price: number;
+  sub_total: number;
+}
