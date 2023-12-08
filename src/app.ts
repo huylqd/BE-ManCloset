@@ -7,6 +7,7 @@ import saleRouter from "./routers/sale";
 import { isCheckedSale } from "./controller/saleController";
 import VnPayRouter from "./routers/VnPay";
 import orderRouter from "./routers/order";
+import AnalystRouter from "./routers/analyst";
 import productRouter from "./routers/product";
 import cartRouter from "./routers/cart";
 import dotenv from "dotenv";
@@ -14,22 +15,24 @@ import UserRouter from "./routers/auth";
 import commentRouter from "./routers/comment";
 import passport from "passport";
 import routerPassport from "./routers/passport";
-import session from 'express-session'
+import session from "express-session";
 import cookieParser from "cookie-parser";
 //Config express
 const app: any = express();
 dotenv.config();
-const {ACCESSTOKEN_SECRET} = process.env
+const { ACCESSTOKEN_SECRET } = process.env;
 app.use(cors());
-app.use(session({
-  secret: ACCESSTOKEN_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
+app.use(
+  session({
+    secret: ACCESSTOKEN_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
       secure: false,
-      maxAge: 30 * 60 * 1000 // Thời gian hết hạn cho phiên (30 phút)
-  }
-}))
+      maxAge: 30 * 60 * 1000, // Thời gian hết hạn cho phiên (30 phút)
+    },
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -42,9 +45,9 @@ app.use("/order", VnPayRouter);
 app.use("/comment", commentRouter);
 app.use("/api", saleRouter);
 app.use("/", orderRouter);
-app.use("/api",routerPassport)
+app.use("/api", routerPassport);
 app.use("/", UserRouter);
-
+app.use("/", AnalystRouter);
 isCheckedSale();
 //Connect DB
 
