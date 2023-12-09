@@ -29,7 +29,7 @@ export const create_payment_url = async (req, res) => {
   let amount = req.body.total_price;
   let bankCode = req.body.bankCode;
   const data = {
-    user_id: req.body.user_id,
+    user_id: req.headers.user_id,
     shipping_address: req.body.shipping_address,
     payment_method:req.body.payment_method,
     items: req.body.items,
@@ -99,12 +99,12 @@ export const vnPay_return = async (req, res) => {
       const billUpdated = await checkOrderSuccessVnPay(
         String(vnp_Params["vnp_TxnRef"])
       );
-      res.redirect("http://localhost:3000/paypage?status=success");
+      res.redirect("http://localhost:3000/payment/paymentStatus?status=success");
     } else {
       const billCancelled = await checkOrderFailedVnPay(
         String(vnp_Params["vnp_TxnRef"])
       );
-      res.redirect("http://localhost:3000/paypage?status=failed");
+      res.redirect("http://localhost:3000/payment/paymentStatus?status=failed");
     }
     // res.status(200).json({
     //     message: 'successful',
