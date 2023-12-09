@@ -12,6 +12,6 @@ const router = express.Router();
 router.get("/cart",(req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(getAllProductInCart));
 
 // add to cart
-router.post("/cart/add-to-cart", wrapRequestHandler(addProductToCard));
+router.post("/cart/add-to-cart", (req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(addProductToCard));
 
 export default router;
