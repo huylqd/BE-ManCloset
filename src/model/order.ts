@@ -23,7 +23,8 @@ const statusSchema = new mongoose.Schema({
   status: {
     enum: [
       "Đang xử lý",
-      "Chưa thanh toán" || "Đã thanh toán",
+      "Chưa thanh toán",
+      "Đã thanh toán",
       "Đang giao hàng",
       "Đã nhận",
       "Đã hủy",
@@ -31,6 +32,7 @@ const statusSchema = new mongoose.Schema({
     type: String,
     default: "Đang xử lý",
     required: true,
+    unique: true
   },
   createdAt: {
     type: Date,
@@ -86,6 +88,7 @@ orderSchema.pre("save", function (next) {
       this.history_order_status.every(
         (entry) => entry.status !== "Chưa thanh toán"
       )
+      && this.history_order_status.length == 0
     ) {
       this.history_order_status.push({
         status: OrderStatus.NotPaid,

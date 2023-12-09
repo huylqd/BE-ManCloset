@@ -160,14 +160,22 @@ export const createBill = async (req: Request, res: Response) => {
 //Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
 export const updateBill = async (req: Request, res: Response) => {
   try {
-    const bill = await Bill.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { status: newStatus } = req.body;
+    const bill = await Bill.findById(req.params.id);
+
     if (!bill) {
       return res.status(400).json({
         message: "Không tìm thấy phiếu đặt hàng cần sửa",
       });
     }
+
+    // cập nhật trạng thái mới 
+    bill.history_order_status.push({
+      status: newStatus,
+      createdAt: new Date()
+    })
+    await bill.save();
+
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
       data: bill,
