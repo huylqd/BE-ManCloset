@@ -48,15 +48,29 @@ export const getProductById = async (req: Request, res: Response) => {
 
 
 
-export const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (req: any, res: Response) => {
   try {
     const { error } = productSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errors = error.details.map((message) => ({ message }));
       return res.status(400).json({ errors });
     }
+   
+    const fileImages = req.files;
+    if (!fileImages || fileImages.length === 0) {
+        return res.status(400).json({
+            error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
+        });
+    }
+    const imagePaths = fileImages.map(file => file.path);
+    const propertiesWithImages = imagePaths.map(imagePath => ({ imageUrl: imagePath }));
     // Thêm sản phẩm vào database
-    const product = await Product.create(req.body);
+    const product = await Product.create(
+      {
+        ...req.body,
+        properties: propertiesWithImages,
+      }
+    );
 
     await Category.findOneAndUpdate(product.categoryId, {
       $addToSet: {
