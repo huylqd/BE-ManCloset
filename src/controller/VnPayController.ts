@@ -95,7 +95,6 @@ export const vnPay_return = async (req, res) => {
 
   if (secureHash === signed) {
     if (vnp_Params["vnp_ResponseCode"] === "00") {
-      console.log("sucesss");
       const billUpdated = await checkOrderSuccessVnPay(
         String(vnp_Params["vnp_TxnRef"])
       );
