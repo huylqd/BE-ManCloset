@@ -3,14 +3,18 @@ import order from "../model/order";
 // Kiểm tra xem có tài liệu nào có order_id cụ thể không
 export const checkOrderSuccessVnPay = async (transactionId) => {
   try {
-    const newStatus: any = {
-      status: "Đã thanh toán",
-      createdAt: new Date(),
+    const orderStatus: any = {
+      status: "Chờ xác nhận",
+      updatedAt: new Date(),
     };
+    const paymentStatus: any = {
+      status: "Đã thanh toán",
+      updatedAt: new Date()
+    }
     const result = await order.findOneAndUpdate(
       { id_transaction: transactionId },
       {
-        $set: { "history_order_status.0": newStatus },
+        $set: { "history_order_status.0": orderStatus , "payment_status": paymentStatus},
       },
       { new: true }
     );

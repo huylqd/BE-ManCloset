@@ -13,7 +13,15 @@ import {
   generateInvoiceTable,
   generateTableRow,
 } from "../utils/exportBill";
-import { IOrder, IOrderItem } from "../interface/order";
+import {
+  IOrder,
+  IOrderItem,
+  OrderStatus,
+  PaymentStatus,
+} from "../interface/order";
+import { SortOrder } from "mongoose";
+import { checkInteger } from "../utils/checkNumber";
+import { dataQuery } from "../utils/dataQuery";
 
 export const getAllBill = async (req: Request, res: Response) => {
   const {
@@ -130,6 +138,58 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
   }
 };
 
+export const getUserOrdersHistory = async (req: Request, res: Response) => {
+  try {
+    const query = req.query;
+
+    const options = {
+      page: checkInteger(+query?.page) ? +query.page - 1 : 0,
+      limit: checkInteger(+query?.limit) ? +query.limit : 10,
+      sort: query.sort || "createdAt",
+      order: query.order || "desc",
+      case: query.case || "Chờ xác nhận",
+    };
+
+    const user_id = req.params.id;
+
+    const user = await User.findById({ _id: user_id });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const userOrdersHistory = await Bill.find({
+      user_id,
+      "current_order_status.status": options.case,
+    })
+      .sort({
+        [options.sort as string]: options.order as SortOrder,
+      })
+      .skip(+options.limit * +options.page)
+      .limit(options.limit as number);
+
+    const results = dataQuery(userOrdersHistory, +options.limit, +options.page);
+
+    if (userOrdersHistory.length === 0) {
+      return res.status(200).json({
+        message: "User don't have order history",
+        result: results,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Query user order history success",
+      result: results,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "server error",
+    });
+  }
+};
+
 export const createBill = async (req: Request, res: Response) => {
   try {
     const { error } = orderSchema.validate(req.body);
@@ -139,6 +199,7 @@ export const createBill = async (req: Request, res: Response) => {
         message: error.details[0].message,
       });
     }
+
     const newBill = new Bill(req.body);
     const bill = await newBill.save();
     if (!bill) {
@@ -159,21 +220,50 @@ export const createBill = async (req: Request, res: Response) => {
 
 //Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
 export const updateBill = async (req: Request, res: Response) => {
+  function stringToPaymentStatus(value: string): PaymentStatus | null {
+    if (Object.values(PaymentStatus).indexOf(value as PaymentStatus) >= 0) {
+      return value as PaymentStatus;
+    }
+    return null;
+  }
+
+  function stringToOrderStatus(value: string): OrderStatus | null {
+    if (Object.values(OrderStatus).indexOf(value as OrderStatus) >= 0) {
+      return value as OrderStatus;
+    }
+    return null;
+  }
+
   try {
-    const { status: newStatus } = req.body;
+
+    const { orderStatus, paymentStatus } = req.body;
     const bill = await Bill.findById(req.params.id);
 
     if (!bill) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "Không tìm thấy phiếu đặt hàng cần sửa",
       });
     }
 
-    // cập nhật trạng thái mới 
-    bill.history_order_status.push({
-      status: newStatus,
-      createdAt: new Date()
-    })
+    if (orderStatus) {
+      bill.history_order_status.push({
+        status: stringToOrderStatus(orderStatus),
+        updatedAt: new Date(),
+      });
+
+      bill.current_order_status = {
+        status: stringToOrderStatus(orderStatus),
+        updatedAt: new Date(),
+      };
+    }
+
+    if (paymentStatus) {
+      bill.payment_status = {
+        status: stringToPaymentStatus(paymentStatus),
+        updatedAt: new Date(),
+      };
+    }
+
     await bill.save();
 
     return res.status(200).json({
@@ -192,7 +282,7 @@ export const exportBill = async (req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
     const bills = await Bill.find({
-      "history_order_status.status": "Đã thanh toán",
+      "order_status.status": "Đã thanh toán",
     });
 
     const userIds = bills.map((item) => item.user_id);
@@ -382,9 +472,9 @@ async function getProductsInfo(items: IOrderItem[]) {
     if (productItem) {
       products.push({
         productName: productItem.productName,
-        size: item.property.size,
-        color: item.property.color,
-        quantity: item.property.quantity,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
         price: item.price,
         subTotal: item.sub_total,
         description: productItem.description,

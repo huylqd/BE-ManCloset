@@ -6,7 +6,7 @@ import {
   checkOrderFailedVnPay,
   checkOrderSuccessVnPay,
 } from "../service/orderService";
-
+import Bill from "../model/order";
 dotenv.config();
 
 export const create_payment_url = async (req, res) => {
@@ -29,7 +29,7 @@ export const create_payment_url = async (req, res) => {
   let amount = req.body.total_price;
   let bankCode = req.body.bankCode;
   const data = {
-    user_id: req.body.user_id,
+    user_id: req.headers.user_id,
     shipping_address: req.body.shipping_address,
     payment_method:req.body.payment_method,
     items: req.body.items,
@@ -64,9 +64,10 @@ export const create_payment_url = async (req, res) => {
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let crypto = require("crypto");
   let hmac = crypto.createHmac("sha512", secretKey);
-  let signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
+  let signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+  console.log(data.items)
   const createBill = new order(data);
-  createBill.save();
+  await createBill.save();
 
   vnp_Params["vnp_SecureHash"] = signed;
   vnpUrl += "?" + querystring.stringify(vnp_Params, { encode: false });
@@ -91,20 +92,20 @@ export const vnPay_return = async (req, res) => {
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let crypto = require("crypto");
   let hmac = crypto.createHmac("sha512", secretKey);
-  let signed = hmac.update(new Buffer(signData, "utf-8")).digest("hex");
+  let signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
   if (secureHash === signed) {
     if (vnp_Params["vnp_ResponseCode"] === "00") {
-      console.log("sucesss");
       const billUpdated = await checkOrderSuccessVnPay(
         String(vnp_Params["vnp_TxnRef"])
       );
-      res.redirect("http://localhost:3000/paypage?status=success");
+      // await Bill.findById
+      res.redirect("http://localhost:3000/payment/orderStatus?status=success");
     } else {
       const billCancelled = await checkOrderFailedVnPay(
         String(vnp_Params["vnp_TxnRef"])
       );
-      res.redirect("http://localhost:3000/paypage?status=failed");
+      res.redirect("http://localhost:3000/payment/orderStatus?status=failed");
     }
     // res.status(200).json({
     //     message: 'successful',
@@ -122,6 +123,7 @@ export const vnPay_return = async (req, res) => {
 };
 
 export const vnPay_ipn = (req, res) => {
+
   let vnp_Params = req.query;
   let secureHash = vnp_Params["vnp_SecureHash"];
 

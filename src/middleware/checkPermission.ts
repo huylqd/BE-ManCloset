@@ -32,6 +32,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
             });
         }
         req.user = user;
+        req.headers.user_id = user._id
         next();
     } catch (error) {
         res.status(401).json({ message: error.message });
