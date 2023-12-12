@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import { UpdateUserReqBody } from "../model/requests/user.requrest";
 import { Request, Response } from "express";
 import HTTP_STATUS from "../constants/httpStatus";
-
+import cloudinary from "../config/cloudinary";
 dotenv.config()
 
 export const signUp = async (req, res) => {
@@ -79,10 +79,17 @@ export const signIn = async (req, res) => {
                 message: "Mật khẩu không khớp"
             })
         }
-        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "15s" })
+        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "1h" })
         const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET , { expiresIn: "2h" })
      
         // res.send('success') 
+        res.cookie("accessToken", token, {
+          httpOnly: true,
+          secure: false,
+          path: "/",
+          // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
+          sameSite: "strict"
+      })
         user.password = undefined;
         res.status(200).json({
             message: "Đăng nhập thành công",
@@ -99,7 +106,7 @@ export const signIn = async (req, res) => {
 }
 export const refeshToken = async (req, res) => {
     const result = await verifyRefreshToken(req.body.refreshToken)
-    console.log(result);
+   
     
     if (!result.status) {
         return res.status(401).json({
@@ -117,15 +124,21 @@ export const getAllUser = async (req, res) => {
     const {
         _page = 1,
         _limit = _page == 0 ? 10000000 : 5,
-        _sort = "role",
+        _sort = "role,createdAt",
         _order = "asc",
         _expand,
         _keywords,
       } = req.query;
+      const sortFields = _sort.split(',');
+      const sortObject = {};
+      sortFields.forEach((field) => {
+        sortObject[field.trim()] = _order === "desc" ? -1 : 1;
+      });
+      
       const options: any = {
         page: _page,
         limit: _limit,
-        sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+        sort: sortObject,
       };
     try {
         
@@ -446,10 +459,6 @@ export const lockUser = async (req, res) => {
               }
            
           }
-         
-      
-     
-  
   } catch (error) {
       return res.status(500).json({
           message:error
@@ -472,15 +481,60 @@ export const lockUser = async (req, res) => {
     
     // Lưu người dùng với danh sách yêu thích đã được cập nhật
     const updatedUser = await user.save();
- 
-    
-  
       res.status(200).json({
           message: 'Xóa danh sách yêu thích thành công',
           wishList: updatedUser
       })
       
   } catch (error) {
-      
+    return res.status(500).json({
+      message:error
+  })
+  }
+}
+export const updateAvatar = async (req,res) => {
+  try {
+    const { userId } = req.params
+    const fileImages = req.files;
+    if (!fileImages || fileImages.length === 0) {
+        return res.status(400).json({
+            error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
+        });
+    }
+    const user = await User.findById(userId);
+    const oldImagePath = user.avatar;
+    const imagePath = fileImages[0].path;
+    console.log(oldImagePath);
+    
+    if(!oldImagePath || oldImagePath.length === 0){
+      await User.findByIdAndUpdate(
+        {_id:userId},
+        { avatar:imagePath},
+        {new:true})
+    return res.status(200).json({
+      message:"Update avatar 111 user thành công",
+      user
+    })
+  }else{
+    const publicId = oldImagePath.split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ đường dẫn 
+    await cloudinary.uploader.destroy(publicId);
+    await User.findByIdAndUpdate(
+      {_id:userId},
+      {avatar:imagePath},
+      {new:true}
+      )
+        return res.status(200).json({
+            message:"Update avatar 222 user thành công",
+            user
+          })
+  }
+    
+ 
+   
+   
+  } catch (error) {
+    return res.status(500).json({
+      message:error
+  })
   }
 }

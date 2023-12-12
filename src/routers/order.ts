@@ -7,6 +7,7 @@ import {
   exportBill,
   exportBillById,
   getAllBill,
+  getUserOrdersHistory,
   updateBill,
 } from "../controller/orderController";
 import { wrapRequestHandler } from "../utils/handlers";
@@ -19,5 +20,7 @@ router.get("/order/export/:bill_id", wrapRequestHandler(exportBillById));
 router.get("/order/user/:userId", billHistoryByUserId);
 router.post("/order", createBill);
 router.patch("/order/:id", updateBill);
+
+router.get("/users/:id/orders", getUserOrdersHistory);
 
 export default router;

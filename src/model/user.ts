@@ -40,7 +40,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
   avatar:{
     type:String,
-    require:true
+    require:true,
   },
   email: {
     type: String,

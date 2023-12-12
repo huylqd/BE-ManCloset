@@ -98,4 +98,12 @@ export const addProductToCard = async (
   });
 };
 
+export const deleteProductsAfterOrder = (req, res) => {
+  try {
+    const user_id = req.headers.user_id
+  } catch (error) {
+    
+  }
+}
+
 

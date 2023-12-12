@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IOrder, OrderStatus } from "../interface/order";
+import { IOrder, OrderStatus, PaymentStatus } from "../interface/order";
 import mongoosePaginate from "mongoose-paginate-v2";
 const itemSchema = new mongoose.Schema(
   {
@@ -8,6 +8,9 @@ const itemSchema = new mongoose.Schema(
       ref: "Products",
     },
     price: Number,
+    product_name: {
+      type: String
+    },
     property: {
       quantity: Number,
       color: String,
@@ -19,22 +22,35 @@ const itemSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const statusSchema = new mongoose.Schema({
+const ORDER_STATUS = {
+  PENDING: "Chờ xác nhận",
+  CONFIRM: "Đã xác nhận",
+  DELIVERY: "Đang giao",
+  RECEIVER: "Đã giao",
+  CANCEL: "Đã huỷ",
+  EXCHANGE: "Đổi hàng",
+};
+
+const PAYMENT_STATUS = {
+  UNPAID: "Chưa thanh toán",
+  PAID: "Đã thanh toán",
+};
+
+const orderStatusSchema = new mongoose.Schema({
   status: {
     enum: [
-      "Đang xử lý",
-      "Chưa thanh toán",
-      "Đã thanh toán",
-      "Đang giao hàng",
-      "Đã nhận",
-      "Đã hủy",
+      ORDER_STATUS.PENDING,
+      ORDER_STATUS.CONFIRM,
+      ORDER_STATUS.DELIVERY,
+      ORDER_STATUS.RECEIVER,
+      ORDER_STATUS.CANCEL,
+      ORDER_STATUS.EXCHANGE,
     ],
     type: String,
-    default: "Đang xử lý",
+    default: ORDER_STATUS.PENDING,
     required: true,
-    unique: true
   },
-  createdAt: {
+  updatedAt: {
     type: Date,
     default: Date.now,
   },
@@ -59,7 +75,40 @@ const orderSchema: Schema<IOrder> = new Schema(
       type: String,
       required: true,
     },
-    history_order_status: [statusSchema],
+    payment_status: {
+      status: {
+        type: String,
+        enum: [PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.PAID],
+        required: true,
+        default: PAYMENT_STATUS.UNPAID,
+      },
+      updatedAt: {
+        type: Date,
+        required: true,
+        default: Date.now,
+      },
+    },
+    current_order_status: {
+      status: {
+        type: String,
+        enum: [
+          ORDER_STATUS.PENDING,
+          ORDER_STATUS.CONFIRM,
+          ORDER_STATUS.DELIVERY,
+          ORDER_STATUS.RECEIVER,
+          ORDER_STATUS.CANCEL,
+          ORDER_STATUS.EXCHANGE,
+        ],
+        default: ORDER_STATUS.PENDING,
+        required: true,
+      },
+      updatedAt: {
+        type: Date,
+        required: true,
+        default: Date.now,
+      },
+    },
+    history_order_status: [orderStatusSchema],
     items: [itemSchema],
     total_price: {
       type: Number,
@@ -83,27 +132,36 @@ const orderSchema: Schema<IOrder> = new Schema(
 );
 
 orderSchema.pre("save", function (next) {
-  if (this.payment_method === "vnpay") {
-    if (
-      this.history_order_status.every(
-        (entry) => entry.status !== "Chưa thanh toán"
-      )
-      && this.history_order_status.length == 0
-    ) {
-      this.history_order_status.push({
-        status: OrderStatus.NotPaid,
-        createdAt: new Date(),
-      });
-    }
-  } else if (this.payment_method === "shipcode") {
-    if (
-      this.history_order_status.every((entry) => entry.status !== "Đang xử lý")
-    ) {
-      this.history_order_status.push({
-        status: OrderStatus.Processing,
-        createdAt: new Date(),
-      });
-    }
+  if (this.payment_method === "vnpay" && this.history_order_status.length === 0) {
+    this.payment_status = {
+      status: PaymentStatus.UNPAID,
+      updatedAt: new Date(),
+    };
+
+    this.current_order_status = {
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    };
+
+    this.history_order_status.push({
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    });
+  } else if (this.payment_method === "shipcode" && this.history_order_status.length === 0) {
+    this.payment_status = {
+      status: PaymentStatus.UNPAID,
+      updatedAt: new Date(),
+    };
+
+    this.current_order_status = {
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    };
+
+    this.history_order_status.push({
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    });
   }
 
   next();
@@ -115,4 +173,3 @@ const order = mongoose.model<IOrder, mongoose.PaginateModel<IOrder>>(
   orderSchema
 );
 export default order;
-

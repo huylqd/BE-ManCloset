@@ -21,7 +21,11 @@ import cookieParser from "cookie-parser";
 const app: any = express();
 dotenv.config();
 const { ACCESSTOKEN_SECRET } = process.env;
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:3000', // Đổi thành địa chỉ của ứng dụng React của bạn
+  credentials: true, // Cho phép gửi cookie
+};
+app.use(cors(corsOptions));
 app.use(
   session({
     secret: ACCESSTOKEN_SECRET,
