@@ -15,7 +15,7 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
     cloudinary,
-    allowedFormats: ['jpg', 'png'],
+    allowedFormats: ['jpg', 'png', 'jpeg'],
     params: {
       folder: 'image_mancloset'
     } 
@@ -23,5 +23,5 @@ const storage = new CloudinaryStorage({
 
 
  export const uploadImage = multer({storage})
-  
+ export default cloudinary;
 

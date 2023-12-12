@@ -6,9 +6,14 @@ import PDFDocument from "pdfkit";
 import User from "../model/user";
 import product from "../model/product";
 import { ProductItem } from "../interface/product";
-import { generateCustomerInformation, generateFooter, generateHeader, generateInvoiceTable, generateTableRow } from "../utils/exportBill";
+import {
+  generateCustomerInformation,
+  generateFooter,
+  generateHeader,
+  generateInvoiceTable,
+  generateTableRow,
+} from "../utils/exportBill";
 import { IOrder, IOrderItem } from "../interface/order";
-
 
 export const getAllBill = async (req: Request, res: Response) => {
   const {
@@ -26,7 +31,6 @@ export const getAllBill = async (req: Request, res: Response) => {
   try {
     const result = await Bill.paginate({}, options);
 
-
     if (result.docs.length === 0) {
       return res.status(400).json({
         message: "Không có phiếu đặt hàng nào",
@@ -39,7 +43,7 @@ export const getAllBill = async (req: Request, res: Response) => {
         currentPage: result.page,
         totalPages: result.totalPages,
         totalItems: result.totalDocs,
-        limit: result.limit
+        limit: result.limit,
       },
     });
   } catch (error) {
@@ -104,7 +108,7 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
   };
   try {
     const id = req.params.userId;
-    const bill = await Bill.paginate({ user_id: id }, options)
+    const bill = await Bill.paginate({ user_id: id }, options);
     if (!bill) {
       return res.status(404).json({
         message: "Không tìm thấy đơn hàng của bạn vui lòng kiểm tra lại",
@@ -156,14 +160,22 @@ export const createBill = async (req: Request, res: Response) => {
 //Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
 export const updateBill = async (req: Request, res: Response) => {
   try {
-    const bill = await Bill.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { status: newStatus } = req.body;
+    const bill = await Bill.findById(req.params.id);
+
     if (!bill) {
       return res.status(400).json({
         message: "Không tìm thấy phiếu đặt hàng cần sửa",
       });
     }
+
+    // cập nhật trạng thái mới 
+    bill.history_order_status.push({
+      status: newStatus,
+      createdAt: new Date()
+    })
+    await bill.save();
+
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
       data: bill,
@@ -222,7 +234,7 @@ export const exportBill = async (req: Request, res: Response) => {
           quantity: item?.property?.quantity,
           price: item?.price,
           subTotal: item?.sub_total,
-          description: productItem?.description
+          description: productItem?.description,
         });
       }
       pdfDoc.text(`ID Hóa Đơn: ${bill?._doc?._id}`);
@@ -239,10 +251,9 @@ export const exportBill = async (req: Request, res: Response) => {
           )
           .join(", ")}`
       );
-      pdfDoc.text(
-        `Tổng tiền: ${bill?.docs.totalPrice}`,
-        { format: { bold: true } }
-      );
+      pdfDoc.text(`Tổng tiền: ${bill?.docs.totalPrice}`, {
+        format: { bold: true },
+      });
       pdfDoc.moveDown();
     }
 
@@ -331,7 +342,6 @@ export const productSold = async (req: Request, res: Response) => {
   }
 };
 
-
 export const exportBillById = async (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
@@ -349,11 +359,11 @@ export const exportBillById = async (req: Request, res: Response) => {
 
       createInvoice(res, bill, products);
     } else {
-      throw new Error('Bill not found');
+      throw new Error("Bill not found");
     }
   } catch (error) {
-    console.error('Error exporting bill:', error);
-    return res.status(500).json({ error: 'Error exporting bill' });
+    console.error("Error exporting bill:", error);
+    return res.status(500).json({ error: "Error exporting bill" });
   }
 };
 
@@ -409,34 +419,41 @@ function createInvoice(res: Response, bill: any, products: ProductItem[]) {
 }
 export const Thongkedoanhso = async (req: Request, res: Response) => {
   try {
-    //tìm sản phẩm bán chạy nhất
+    const currentDate = new Date();
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
+
     const result = await Bill.aggregate([
       {
-        $unwind: "$items",
+        $match: {
+          createdAt: {
+            $gte: startOfMonth,
+            $lte: endOfMonth,
+          },
+        },
       },
       {
         $group: {
-          _id: {
-            month: { $month: "$createdAt" }, // Lấy tháng từ trường createdAt
-            year: { $year: "$createdAt" }, // Lấy năm từ trường createdAt
-          },
-
-          totalAmountSold: { $sum: "$items.sub_total" },
+          _id: null,
+          totalAmountSold: { $sum: "$total_price" },
         },
       },
       {
         $project: {
           _id: 0,
-          month: "$_id.month",
-          year: "$_id.year",
-
           totalAmountSold: 1,
-        },
-      },
-      {
-        $sort: {
-          year: 1, // Sắp xếp theo năm tăng dần
-          month: 1, // Sắp xếp theo tháng tăng dần
         },
       },
     ]).exec();

@@ -16,11 +16,18 @@ export const getAllProductInCart = async (
   const {_id} = req.user;
   const cart = await Cart.find({ user_id: _id });
   // console.log(cart);
+
+  if(!cart){
+    return res.status(400).json({
+      message: "Giỏ hàng bị lỗi"
+    })
+  }
   
   const products = cart[0].products;
 
   return res.status(HTTP_STATUS.OK).json({
     result: products,
+    message: "Lấy sản phẩm trong giỏ hàng thành công"
   });
 };
 

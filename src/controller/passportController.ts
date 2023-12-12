@@ -13,8 +13,6 @@ passport.use(new GoogleStrategy({
     passReqToCallback: true
 },
     async (request, accessToken, refreshToken, profile, done) => {
-  
-        
         const isExitUser = await Auth.findOne({
             googleId: profile.id,
             authType: "google"
@@ -56,9 +54,22 @@ passport.deserializeUser(({ user, accessToken }, done) => {
 });
 
 export const LoginWithGoogle = (req, res) => {
-    const { accessToken } = req.user;
-    console.log(req.user);
-    res.status(302).redirect(`http://localhost:3000/?accessToken=${accessToken}`);   
+    const { accessToken,user } = req.user;
+    res.cookie("accessToken", accessToken, {
+        httpOnly: false,
+        secure: false,
+        path: "/",
+        // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
+        sameSite: "strict"
+    })
+    res.cookie("user", JSON.stringify(user), {
+        httpOnly: false,
+        secure: false,
+        path: "/",
+        // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
+        sameSite: "strict"
+    })
+    res.status(302).redirect(`http://localhost:3000`);   
     return res.status(200).json({ 
         data:req.user
     })

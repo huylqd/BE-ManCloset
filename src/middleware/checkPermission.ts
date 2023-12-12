@@ -12,7 +12,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
         // lấy jwt token từ header
         const token = req.headers.authorization.split(" ")[1];
         const data = await verifyToken(token);
-        console.log("duydeptrai",data);
+        
         if(!data.status){   
             return res.status(401).json({
                 message: data.message,
@@ -20,7 +20,7 @@ export const checkPermission = async (req, res, next, requiredRole) => {
         }
         const id = data.payload 
         const user = await User.findById(id);
-        console.log(user);
+     
         if(user.isBlocked){
             return res.status(401).json({
                 message: "Tài khoản của bạn đã bị khóa",

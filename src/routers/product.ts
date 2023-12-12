@@ -18,9 +18,9 @@ router.get("/products",getAllProduct);
 router.get("/products/:id", getProductById);
 router.get("/products/cate/:categoryId", getProductByCategoryId);
 
-router.post("/products", uploadImage.array('images', 5),createProduct);
-router.patch("/products/:id", updateProduct);
-router.delete("/products/:id", removeProduct);
+router.post("/products", (req, res, next) => { checkPermission(req, res, next, 'admin') }, uploadImage.array("images",5) ,createProduct);
+router.patch("/products/:id", (req, res, next) => { checkPermission(req, res, next, 'admin') },updateProduct);
+router.delete("/products/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, removeProduct);
 // Filter
 router.get("/products/filter/:size",FilterProductBySize)
 router.get("/products/price/filter",FilterProductByPrice)

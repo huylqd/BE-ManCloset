@@ -41,7 +41,6 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   avatar:{
     type:String,
     require:true,
-    default:''
   },
   email: {
     type: String,
