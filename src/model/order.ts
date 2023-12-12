@@ -8,6 +8,9 @@ const itemSchema = new mongoose.Schema(
       ref: "Products",
     },
     price: Number,
+    product_name: {
+      type: String
+    },
     property: {
       quantity: Number,
       color: String,
@@ -46,21 +49,6 @@ const orderStatusSchema = new mongoose.Schema({
     type: String,
     default: ORDER_STATUS.PENDING,
     required: true,
-    unique: true,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-const paymentStatusSchema = new mongoose.Schema({
-  status: {
-    enum: [PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.PAID],
-    type: String,
-    default: PAYMENT_STATUS.UNPAID,
-    required: true,
-    unique: true,
   },
   updatedAt: {
     type: Date,
@@ -143,44 +131,37 @@ const orderSchema: Schema<IOrder> = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-
-
 orderSchema.pre("save", function (next) {
-  if (this.payment_method === "vnpay") {
-    if (
-      this.payment_status.toString() !== PaymentStatus.UNPAID &&
-      this.history_order_status.length == 0
-    ) {
-      this.payment_status = {
-        status: PaymentStatus.UNPAID,
-        updatedAt: new Date(),
-      };
-      this.history_order_status.push({
-        status: OrderStatus.PENDING,
-        updatedAt: new Date
-      })
-      this.current_order_status = {
-        status: OrderStatus.PENDING,
-        updatedAt: new Date
-      }
-    }
-  } else if (this.payment_method === "shipcode") {
-    if (
-      this.history_order_status.every((entry) => entry.status !== ORDER_STATUS.PENDING)
-    ) {
-      this.history_order_status.push({
-        status: OrderStatus.PENDING,
-        updatedAt: new Date(),
-      });
-      this.payment_status = {
-        status: PaymentStatus.UNPAID,
-        updatedAt: new Date(),
-      };
-      this.current_order_status = {
-        status: OrderStatus.PENDING,
-        updatedAt: new Date
-      }
-    }
+  if (this.payment_method === "vnpay" && this.history_order_status.length === 0) {
+    this.payment_status = {
+      status: PaymentStatus.UNPAID,
+      updatedAt: new Date(),
+    };
+
+    this.current_order_status = {
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    };
+
+    this.history_order_status.push({
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    });
+  } else if (this.payment_method === "shipcode" && this.history_order_status.length === 0) {
+    this.payment_status = {
+      status: PaymentStatus.UNPAID,
+      updatedAt: new Date(),
+    };
+
+    this.current_order_status = {
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    };
+
+    this.history_order_status.push({
+      status: OrderStatus.PENDING,
+      updatedAt: new Date(),
+    });
   }
 
   next();

@@ -199,6 +199,7 @@ export const createBill = async (req: Request, res: Response) => {
         message: error.details[0].message,
       });
     }
+
     const newBill = new Bill(req.body);
     const bill = await newBill.save();
     if (!bill) {
@@ -234,6 +235,7 @@ export const updateBill = async (req: Request, res: Response) => {
   }
 
   try {
+
     const { orderStatus, paymentStatus } = req.body;
     const bill = await Bill.findById(req.params.id);
 
