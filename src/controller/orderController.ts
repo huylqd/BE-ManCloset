@@ -1,6 +1,6 @@
 import { orderSchema } from "../schema/orderSchema";
 import Bill from "../model/order";
-import { Request, Response } from "express";
+import { Request, Response, json } from "express";
 import fs from "fs";
 import PDFDocument from "pdfkit";
 import User from "../model/user";
@@ -12,6 +12,7 @@ import {
   generateHeader,
   generateInvoiceTable,
   generateTableRow,
+  removeAccents,
 } from "../utils/exportBill";
 import {
   IOrder,
@@ -84,19 +85,20 @@ export const getAllBill = async (req: Request, res: Response) => {
 export const billHistoryById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const billById = await Bill.findById(id);
-    if (!billById) {
+    const order = await Bill.findById(id)
+    if(!order){
       return res.status(404).json({
-        message: "không tìm thấy đơn hàng của bạn kiểm tra lại",
-      });
+        message: "Đơn hàng không tồn tại"
+      })
     }
-    return res.json(200).json({
-      message: "Lịch sử đặt hàng của bạn",
-      data: billById,
-    });
+
+    return res.status(200).json({
+      message: "Đơn hàng đã được tìm thấy",
+      data: order
+    })
   } catch (error) {
     return res.status(500).json({
-      message: error,
+      message: error.message,
     });
   }
 };
@@ -137,6 +139,7 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
     });
   }
 };
+
 
 export const getUserOrdersHistory = async (req: Request, res: Response) => {
   try {
@@ -235,7 +238,6 @@ export const updateBill = async (req: Request, res: Response) => {
   }
 
   try {
-
     const { orderStatus, paymentStatus } = req.body;
     const bill = await Bill.findById(req.params.id);
 
