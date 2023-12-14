@@ -28,9 +28,13 @@ const addressSchema = new mongoose.Schema(
   }
 )
 const wishListSchema = new mongoose.Schema({
-  name:{type:String,require:true},
-  imageUrl:{type:String,require:true},
-  price:{type:Number,require:true}
+  // name:{type:String,require:true},
+  // imageUrl:{type:String,require:true},
+  // price:{type:Number,require:true}
+  products:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Products",
+  }
 })
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
