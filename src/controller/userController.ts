@@ -504,7 +504,7 @@ export const updateAvatar = async (req,res) => {
     const user = await User.findById(userId);
     const oldImagePath = user.avatar;
     const imagePath = fileImages[0].path;
-    console.log(oldImagePath);
+   
     
     if(!oldImagePath || oldImagePath.length === 0){
       await User.findByIdAndUpdate(

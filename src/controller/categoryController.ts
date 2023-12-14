@@ -153,26 +153,21 @@ export const removeCategory = async (req: any, res: any) => {
       });
     }
     const productsToUpdate = await Product.find({categoryId:id})
-    console.log(productsToUpdate);
+   
     
-    const newCategoryId = '6568b320bc25a52be604b19f';
+    const newCategoryId = '65781e8b3d0129ac4e8355bd';
     let newCategory = await Category.findById(newCategoryId);
-    console.log('newCategory',newCategory);
-    
-    // if (!newCategory) {
-    
-    //   newCategory = new Category({
-    //     // Thêm thông tin mới cho danh mục mới nếu cần
-    //     name: 'New Category Name', // Thay bằng thông tin thực tế
-    //   });
-    //   await newCategory.save();
-    // }
-    const updatedProducts = await Promise.all(productsToUpdate.map(async (product:any) => {
-      newCategory.products.push(product)
-      return await newCategory.save();
+
+     await Promise.all(productsToUpdate.map(async (product:any) => {
+        newCategory.products.push(product._id)
+      
     }));
-    const removedCategory = await Category.findByIdAndDelete(id);
-    res.status(201).json({
+      const removedCategory = await Category.deleteOne({_id:id});
+      console.log(removedCategory);
+      await newCategory.save();
+  
+    
+    res.status(200).json({
       message: "Category remove successfully",
       data: removedCategory,
     });
