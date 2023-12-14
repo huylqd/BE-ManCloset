@@ -117,14 +117,14 @@ export const updateProduct = async (req: any, res: Response) => {
     // Tìm sản phẩm theo id và cập nhật dữ liệu mới
   const productId = req.params.id;
    const product = await Product.findById(productId);
-  console.log(product);
+  
   
    const oldImagePath = product.properties?.map((property) => {
       return property.imageUrl
    })
-   console.log("oldImagePath",oldImagePath);
+ 
    const publicId = oldImagePath[0].split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ đường dẫn 
-   console.log(publicId);
+
    
     await cloudinary.uploader.destroy(publicId);
     const updatedProduct = await Product.findOneAndUpdate(
