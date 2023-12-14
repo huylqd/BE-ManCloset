@@ -41,8 +41,14 @@ export const addProductToCard = async (
 ) => {
   const { product, user_id } = req.body;
   // console.log(req.body);
-
+  console.log("body",req.body);
+  
+  console.log("product",product);
+  console.log("user_id",user_id);
+  
   const { _id } = product;
+
+  
 
   // kiem tra san pham co ton tai trong products khong
 
