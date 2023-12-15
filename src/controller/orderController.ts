@@ -469,25 +469,27 @@ async function getProductsInfo(items: IOrderItem[]) {
   const products: ProductItem[] = [];
   const promises = items.map(async (item) => {
     const productItem = await product.findById({ _id: item.product_id });
+    console.log("item", productItem.properties, item)
     if (productItem) {
       products.push({
         productName: productItem.productName,
-        size: item.size,
-        color: item.color,
-        quantity: item.quantity,
+        size: item.property.size,
+        color: item.property.color,
+        quantity: item.property.quantity,
         price: item.price,
         subTotal: item.sub_total,
         description: productItem.description,
       });
     }
   });
+
   await Promise.all(promises);
   return products;
 }
 
 function createInvoice(res: Response, bill: any, products: ProductItem[]) {
   let doc = new PDFDocument({ size: "A4", margin: 50 });
-
+  console.log('products', products)
   generateHeader(doc);
   const invoiceTableTop = 330;
   generateCustomerInformation(doc, bill);

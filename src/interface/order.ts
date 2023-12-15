@@ -13,7 +13,7 @@ export interface IOrder {
   updatedAt: Date;
   userName?: string;
   payment_status: IPaymentStatus;
-  current_order_status:IOrderStatus
+  current_order_status: IOrderStatus
 }
 
 export enum OrderStatus {
@@ -45,9 +45,11 @@ export interface IOrderItem {
   _id: string;
   name: string;
   price: number;
-  quantity: number;
-  color: string;
-  size: string;
-  imageUrl: string;
+  property: {
+    quantity: number;
+    color: string;
+    size: string;
+    imageUrl: string;
+  };
   sub_total: number;
 }

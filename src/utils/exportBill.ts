@@ -109,6 +109,7 @@ export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
     let totalPrice = 0
     for (i = 0; i < product.length; i++) {
         const item = product[i];
+        console.log("quantity:", item)
         totalPrice += item.subTotal;
         const position = 330 + (i + 1) * 30;
         generateTableRow(
