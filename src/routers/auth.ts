@@ -10,7 +10,7 @@ router.use(express.json());
 router.post("/signup", signUp)
 router.post("/signIn", signIn)
 router.post("/refreshToken", refeshToken)
-router.get("/user",(req, res, next) => { checkPermission(req, res, next, 'admin') }, getAllUser)
+router.get("/user", getAllUser)
 router.get("/user/:id", getOneUser)
 // Danh sách yêu thích
 router.get("/user/:userId/wishlist", getWishListByUser)
@@ -26,5 +26,5 @@ router.patch("/user/:userId/address/:addressId", (req, res, next) => { checkPerm
 router.patch("/user/:id", updateUser)
 router.delete("/user/:userId/address/:addressId", (req, res, next) => { checkPermission(req, res, next, 'member') }, deleteAddress)
 router.get("/user/:id/address", getUserAddress)
-router.patch("/user/:userId/avatar",uploadImage.array("avatar",5),updateAvatar)
+router.patch("/user/:userId/avatar", uploadImage.array("avatar", 5), updateAvatar)
 export default router

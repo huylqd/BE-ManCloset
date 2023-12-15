@@ -46,7 +46,7 @@ app.use("/api", categoryRouter);
 app.use("/api", couponRouter);
 app.use("/api", productRouter);
 app.use("/order", VnPayRouter);
-app.use("/comment", commentRouter);
+app.use("/api", commentRouter);
 app.use("/api", saleRouter);
 app.use("/", orderRouter);
 app.use("/api", routerPassport);
