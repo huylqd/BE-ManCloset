@@ -31,7 +31,7 @@ export const create_payment_url = async (req, res) => {
   const data = {
     user_id: req.headers.user_id,
     shipping_address: req.body.shipping_address,
-    payment_method:req.body.payment_method,
+    payment_method: req.body.payment_method,
     items: req.body.items,
     total_price: req.body.total_price,
     id_transaction: String(orderId),
@@ -65,7 +65,7 @@ export const create_payment_url = async (req, res) => {
   let crypto = require("crypto");
   let hmac = crypto.createHmac("sha512", secretKey);
   let signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
-  console.log(data.items)
+  // console.log(data.items)
   const createBill = new order(data);
   await createBill.save();
 
@@ -123,7 +123,6 @@ export const vnPay_return = async (req, res) => {
 };
 
 export const vnPay_ipn = (req, res) => {
-
   let vnp_Params = req.query;
   let secureHash = vnp_Params["vnp_SecureHash"];
 

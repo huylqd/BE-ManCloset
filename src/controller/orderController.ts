@@ -85,17 +85,17 @@ export const getAllBill = async (req: Request, res: Response) => {
 export const billHistoryById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const order = await Bill.findById(id)
-    if(!order){
+    const order = await Bill.findById(id);
+    if (!order) {
       return res.status(404).json({
-        message: "Đơn hàng không tồn tại"
-      })
+        message: "Đơn hàng không tồn tại",
+      });
     }
 
     return res.status(200).json({
       message: "Đơn hàng đã được tìm thấy",
-      data: order
-    })
+      data: order,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error.message,
@@ -139,7 +139,6 @@ export const billHistoryByUserId = async (req: any, res: Response) => {
     });
   }
 };
-
 
 export const getUserOrdersHistory = async (req: Request, res: Response) => {
   try {
@@ -209,6 +208,36 @@ export const createBill = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "Không thể tạo danh mục",
       });
+    }
+    const items = req.body.items;
+    console.log("item", items);
+
+    for (const item of items) {
+      const result = await product.findOne({ _id: item.product_id });
+
+      if (!result) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const selectedColor: any = result.properties.find(
+        (prop) => prop.color === item.property.color
+      );
+      const selectedVariant = selectedColor.variants.find(
+        (variant) => variant.size === item.property.size
+      );
+
+      if (
+        !selectedVariant ||
+        selectedVariant.quantity < item.property.quantity
+      ) {
+        return res.status(400).json({
+          message: "Không tồn tại màu hoặc hết hàng",
+          data: bill,
+        });
+      } else {
+        selectedVariant.quantity -= item.property.quantity;
+        await result.save();
+      }
     }
     return res.status(201).json({
       message: "Phiếu đặt hàng đã được tạo",
@@ -362,78 +391,6 @@ export const exportBill = async (req: Request, res: Response) => {
   }
 };
 
-export const productSold = async (req: Request, res: Response) => {
-  // Lấy ngày bắt đầu và kết thúc của tháng hiện tại
-  const startDate = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    1
-  );
-  const endDate = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth() + 1,
-    0
-  );
-  // Lấy ngày bắt đầu và kết thúc của ngày hiện tại
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
-  // Lấy ngày bắt đầu và kết thúc của năm hiện tại
-  const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-  const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
-  // Lấy ngày bắt đầu và kết thúc của tuần hiện tại
-  const currentDate = new Date();
-  const startOfWeek = new Date(
-    currentDate.setDate(currentDate.getDate() - currentDate.getDay())
-  ); // Ngày đầu tuần (chủ nhật)
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(endOfWeek.getDate() + 6); // Ngày cuối tuần (thứ bảy)
-  try {
-    //tìm sản phẩm bán chạy nhất
-    const result = await Bill.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: startOfWeek,
-            $lte: endOfWeek,
-          },
-        },
-      },
-      {
-        $unwind: "$items", // Mở rộng mảng 'items' thành các bản ghi riêng lẻ
-      },
-      {
-        $group: {
-          _id: "$items.product_id", // Nhóm theo product_id
-          totalQuantitySold: { $sum: "$items.property.quantity" }, // Tính tổng số lượng đã bán
-          totalAmountSold: { $sum: "$items.sub_total" },
-        },
-      },
-      {
-        $project: {
-          _id: 0, // Loại bỏ trường _id
-          product_id: "$_id", // Đặt lại tên trường product_id
-          totalQuantitySold: 1, // Giữ lại trường totalQuantitySold
-          totalAmountSold: 1,
-        },
-      },
-      {
-        $sort: {
-          totalQuantitySold: -1, // Sắp xếp theo số lượng giảm dần
-        },
-      },
-    ]).exec();
-    return res.status(200).json({
-      message: "Sản phẩm bán chạy",
-      data: result,
-    });
-  } catch (error) {
-    return error.message;
-  }
-};
-
 export const exportBillById = async (req: Request, res: Response) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", 'attachment; filename="example.pdf"');
@@ -509,51 +466,3 @@ function createInvoice(res: Response, bill: any, products: ProductItem[]) {
   doc.pipe(res);
   doc.end();
 }
-export const Thongkedoanhso = async (req: Request, res: Response) => {
-  try {
-    const currentDate = new Date();
-    const startOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      1
-    );
-    const endOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
-    );
-
-    const result = await Bill.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: startOfMonth,
-            $lte: endOfMonth,
-          },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalAmountSold: { $sum: "$total_price" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalAmountSold: 1,
-        },
-      },
-    ]).exec();
-    return res.status(200).json({
-      message: "Doanh thu",
-      data: result,
-    });
-  } catch (error) {
-    return error.message;
-  }
-};
