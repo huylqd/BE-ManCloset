@@ -62,25 +62,63 @@ export const getAllBill = async (req: Request, res: Response) => {
   }
 };
 
-/* Postman create a new bill : req.body
-    {
-    "user_id":"65314ba0d0253dbb606a1c4e",
-    "shipping_address":"Ninh Bình",
-    "items":[
-        {
-            "product_id":"6530d9f81dfde459a5fd287a",
-            "price": 20000,
-            "property":{
-                "quantity":2,
-                "color":"vàng",
-                "size":"M"
-            },
-            "sub_total":40000
-        }
-    ],
-    "total_price":40000
+
+type TQuery = {
+  page: number | string,
+  limit: number | string,
+  sort: string,
+  order: string,
+  orderStatus: string,
+  paymentStatus: string,
+}
+export const getBills = async (req: Request, res: Response) => {
+  try {
+    const query = req.query;
+
+    const options: TQuery = {
+      page: checkInteger(+query?.page) ? +query.page - 1 : 0,
+      limit: checkInteger(+query?.limit) ? +query.limit : 10,
+      sort: query.sort as string || "createdAt",
+      order: query.order as string || "desc",
+      orderStatus: query.orderStatus as string || "Chờ xác nhận",
+      paymentStatus: query.paymentStatus as string || "Chưa thanh toán",
+    };
+
+    let totalBill = await Bill.find({
+      "current_order_status.status": options.orderStatus,
+      "payment_status.status": options.paymentStatus,
+    })
+
+    let bills = await Bill.find({
+      "current_order_status.status": options.orderStatus,
+      "payment_status.status": options.paymentStatus,
+    })
+      .sort({
+        [options.sort as string]: options.order as SortOrder,
+      })
+      .skip(+options.page * +options.limit)
+      .limit(+options.limit)
+
+      const results = dataQuery(totalBill, +options.limit, +options.page);
+
+    if (bills.length === 0) {
+      return res.status(200).json({
+        message: "Không có đơn hàng nào",
+        result: results,
+      });
     }
-*/
+
+    return res.status(200).json({
+      message: "Tìm kiếm đơn hàng thành công",
+      result: results,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 export const billHistoryById = async (req: Request, res: Response) => {
   try {
@@ -162,6 +200,11 @@ export const getUserOrdersHistory = async (req: Request, res: Response) => {
       });
     }
 
+    const userOrdersHistoryAll = await Bill.find({
+      user_id,
+      "current_order_status.status": options.case,
+    })
+
     const userOrdersHistory = await Bill.find({
       user_id,
       "current_order_status.status": options.case,
@@ -172,7 +215,7 @@ export const getUserOrdersHistory = async (req: Request, res: Response) => {
       .skip(+options.limit * +options.page)
       .limit(options.limit as number);
 
-    const results = dataQuery(userOrdersHistory, +options.limit, +options.page);
+    const results = dataQuery(userOrdersHistoryAll, +options.limit, +options.page);
 
     if (userOrdersHistory.length === 0) {
       return res.status(200).json({
@@ -322,7 +365,7 @@ export const exportBill = async (req: Request, res: Response) => {
         $in: userIds,
       },
     });
-    console.log("user", users);
+
     const exportCustom: any = await Promise.all(
       bills.map(async (bill) => {
         const user = users.filter((user) => user._id.equals(bill.user_id));

@@ -3,7 +3,7 @@ import HTTP_STATUS from "../constants/httpStatus";
 import { AddToCartReqBody } from "../model/requests/cart.requests";
 import { ParamsDictionary } from "express-serve-static-core";
 import Cart from "../model/cart";
-
+import { ObjectId } from "mongodb";
 /**
  * @Description: get all product in cart
  * @header: {user_id}
@@ -40,24 +40,25 @@ export const addProductToCard = async (
   next: NextFunction
 ) => {
   const { product, user_id } = req.body;
-  // console.log(req.body);
-  console.log("body",req.body);
-  
-  console.log("product",product);
-  console.log("user_id",user_id);
-  
   const { _id } = product;
 
-  
-
+  // const objUserId = new ObjectId(user_id)
+  // console.log(user_id)
   // kiem tra san pham co ton tai trong products khong
 
-  const productExistInCart = await Cart.find({
+  const userCart = await Cart.findOne({
     user_id: user_id,
-    "products._id": _id,
   });
 
-  if (!productExistInCart || productExistInCart.length === 0) {
+  if(!userCart){
+    return res.status(404).json({
+      message: "Khong tim thay gio hang"
+    })
+  }
+
+  const productsInCart = userCart.products
+
+  if (!productsInCart || productsInCart.length === 0) {
     // neu san pham chua ton tai, them san pham vao products []
     const productAddToCart = {
       ...product,
@@ -81,7 +82,11 @@ export const addProductToCard = async (
     await Cart.updateOne(
       {
         user_id: user_id,
-        "products._id": _id,
+        products: {
+          $elemMatch: {
+            _id: _id
+          }
+        }
       },
       {
         $inc: {

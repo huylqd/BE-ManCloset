@@ -241,10 +241,6 @@ export const updateAddress = async (req, res) => {
       });
     }
 
-    // user.address[addressIndex].city = updateAddressData.city;
-    // user.address[addressIndex].district = updateAddressData.district;
-    // user.address[addressIndex].wards = updateAddressData.wards;
-    // user.address[addressIndex].detailAdress = updateAddressData.detailAdress;
     if (
       "isDefault" in updateAddressData &&
       updateAddressData.isDefault === true
