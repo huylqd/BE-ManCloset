@@ -9,6 +9,7 @@ import { UpdateUserReqBody } from "../model/requests/user.requrest";
 import { Request, Response } from "express";
 import HTTP_STATUS from "../constants/httpStatus";
 import cloudinary from "../config/cloudinary";
+import { sendMail } from "../utils/sendMail";
 dotenv.config()
 
 export const signUp = async (req, res) => {
@@ -58,114 +59,114 @@ export const signIn = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-        const { error } = signInSchema.validate({ email, password }, { abortEarly: false })
-        if (error) {
-            const errors = error.details.map((err) => err.message)
-            return res.status(400).json({
-                message: errors
-            })
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "Tài khoản không tồn tại" })
-        }
-        if (user.isBlocked) {
-            return res.status(400).json({ message: "Tài khoản tạm thời bị khóa" })
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({
-                message: "Mật khẩu không khớp"
-            })
-        }
-        const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "1h" })
-        const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET , { expiresIn: "2h" })
-     
-        // res.send('success') 
-        res.cookie("accessToken", token, {
-          httpOnly: true,
-          secure: false,
-          path: "/",
-          // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
-          sameSite: "strict"
+    const { error } = signInSchema.validate({ email, password }, { abortEarly: false })
+    if (error) {
+      const errors = error.details.map((err) => err.message)
+      return res.status(400).json({
+        message: errors
       })
-        user.password = undefined;
-        res.status(200).json({
-            message: "Đăng nhập thành công",
-            data: user,
-            accessToken: token,
-            refreshToken: refeshToken,
-        });
-    } catch (error) {
-        if (error.name === "ValidationError") {
-            return res.status(400).json({ message: error.errors[0] });
-        }
-        res.status(500).json({ message: "Internal Server Error" });
     }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Tài khoản không tồn tại" })
+    }
+    if (user.isBlocked) {
+      return res.status(400).json({ message: "Tài khoản tạm thời bị khóa" })
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Mật khẩu không khớp"
+      })
+    }
+    const token = jwt.sign({ _id: user._id }, process.env.ACCESSTOKEN_SECRET, { expiresIn: "1h" })
+    const refeshToken = jwt.sign({ _id: user._id }, process.env.REFESHTOKEN_SECRET, { expiresIn: "2h" })
+
+    // res.send('success') 
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+      secure: false,
+      path: "/",
+      // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
+      sameSite: "strict"
+    })
+    user.password = undefined;
+    res.status(200).json({
+      message: "Đăng nhập thành công",
+      data: user,
+      accessToken: token,
+      refreshToken: refeshToken,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ message: error.errors[0] });
+    }
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 }
 export const refeshToken = async (req, res) => {
-    const result = await verifyRefreshToken(req.body.refreshToken)
-   
-    
-    if (!result.status) {
-        return res.status(401).json({
-            message: result.message
-        });
-    }
-    const token = jwt.sign({ _id: result.payload._id }, process.env.ACCESSTOKEN_SECRET , { expiresIn: "30d" })
-    res.status(200).json({
-        message: "Đăng nhập thành công",
-        data: token,
-    })
+  const result = await verifyRefreshToken(req.body.refreshToken)
+
+
+  if (!result.status) {
+    return res.status(401).json({
+      message: result.message
+    });
+  }
+  const token = jwt.sign({ _id: result.payload._id }, process.env.ACCESSTOKEN_SECRET, { expiresIn: "30d" })
+  res.status(200).json({
+    message: "Đăng nhập thành công",
+    data: token,
+  })
 }
 
 export const getAllUser = async (req, res) => {
-    const {
-        _page = 1,
-        _limit = _page == 0 ? 10000000 : 5,
-        _sort = "role,createdAt",
-        _order = "asc",
-        _expand,
-        _keywords,
-      } = req.query;
-      const sortFields = _sort.split(',');
-      const sortObject = {};
-      sortFields.forEach((field) => {
-        sortObject[field.trim()] = _order === "desc" ? -1 : 1;
-      });
-      
-      const options: any = {
-        page: _page,
-        limit: _limit,
-        sort: sortObject,
-      };
-    try {
-        
-        
-        const user = await User.paginate({},options)
-        if (user.length === 0) {
-            res.status(200).json({
-                message: "No have result"
-            })
-        }
-        
-        res.status(200).json({
-            message: "Get All User Successfully",
-            data: user.docs,
-            paginate :{
-                currentPage: user.page,
-                totalPages: user.totalPages,
-                totalItems: user.totalDocs,
-                limit:user.limit
-            }
-        })
-    } catch (error) {
-        return res.status(500).json({
-            message: "Error get user "
-        })
-    
+  const {
+    _page = 1,
+    _limit = _page == 0 ? 10000000 : 5,
+    _sort = "role,createdAt",
+    _order = "asc",
+    _expand,
+    _keywords,
+  } = req.query;
+  const sortFields = _sort.split(',');
+  const sortObject = {};
+  sortFields.forEach((field) => {
+    sortObject[field.trim()] = _order === "desc" ? -1 : 1;
+  });
+
+  const options: any = {
+    page: _page,
+    limit: _limit,
+    sort: sortObject,
+  };
+  try {
+
+
+    const user = await User.paginate({}, options)
+    if (user.length === 0) {
+      res.status(200).json({
+        message: "No have result"
+      })
     }
+
+    res.status(200).json({
+      message: "Get All User Successfully",
+      data: user.docs,
+      paginate: {
+        currentPage: user.page,
+        totalPages: user.totalPages,
+        totalItems: user.totalDocs,
+        limit: user.limit
+      }
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error get user "
+    })
+
+  }
 }
 
 export const getOneUser = async (req, res) => {
@@ -289,9 +290,9 @@ export const deleteAddress = async (req, res) => {
       });
     }
 
-    if(user.address[addressIndex].isDefault && user.address.length >= 2){
+    if (user.address[addressIndex].isDefault && user.address.length >= 2) {
       console.log("1 >>>>")
-      if(addressIndex === 0) {
+      if (addressIndex === 0) {
         user.address[addressIndex + 1].isDefault = true
       } else {
         user.address[0].isDefault = true
@@ -361,180 +362,182 @@ export const getUserAddress = async (req: Request, res: Response) => {
 }
 
 export const deleteUser = async (req, res) => {
-      }
+}
 
 export const lockUser = async (req, res) => {
   try {
-      const { error } = userSchema.validate(req.body);
-      if (error) {
-        console.log("error", error);
-        return res.status(400).json({
-          message: error.details[0].message,
-        });
-      }
-      const {userId} = req.params
- 
-      const lockByUser = await User.findById(userId);
-      if(!lockByUser){
-          res.status(404).json({
-              message: "User not found",
-            });
-          }
-      
-      const user = await User.findByIdAndUpdate(
-          userId,
-           { isBlocked: lockByUser.isBlocked ? false : true } ,
-          { new: true } 
-      )
-      if (!user) {
-          res.status(404).json({
-            message: "User not found",    
-          });
-        }
-        res.status(200).json({
-          message:"Khóa người dùng thành công",
-          data:user
-        })
-      
-  } catch (error) {
-      return res.status(500).json({
-          message: error
-      })
-  }
- }
-
- export const getWishListByUser = async (req, res) => {
-  try {
-      const id = req.params.userId;
-      const user = await User.findById(id); 
-      if(!user){
-           res.status(404).json({
-              message:"User không tồn tại"
-          })
-      }else{
-           res.status(200).json({
-              message:"Danh sách yêu thích",
-              wishList:user.wishList
-          })
-      }
-  } catch (error) {
-      return    res.status(500).json({
-      message:error
-     })
-  }
- }
- export const addRemoveWishLish = async (req, res) => {
-  try {
-      const user = req.user
-      if(!user){
-          return res.status(404).json({
-              message:"Bạn cần đăng nhập để thực hiện chức năng này"
-          })
-      }
-      const itemToAdd = req.body;
-      console.log(itemToAdd);
-      console.log(user);
-      const  {_id}  = req.body;
-          if(_id){
-              user.wishList = user.wishList.filter(item =>item._id.toString() !== _id.toString());
-              // Lưu người dùng với danh sách yêu thích đã được cập nhật
-              const updatedUser = await user.save();
-              res.status(200).json({
-                  message: 'Xóa danh sách yêu thích thành công',
-                  wishList: updatedUser
-              })
-          }else{
-              const existingItem = user.wishList.find(item => item.name === itemToAdd.name);
-              if(existingItem){
-                  res.status(404).json({
-                      message: 'Đã tồn tại trong danh sách yêu thích'
-                  })
-              }else{
-                  user.wishList.push(itemToAdd);
-                  const addWishList = await user.save();
-                  res.status(200).json({
-                      message: "Thêm danh sách yêu thích thành công",
-                      wishList:addWishList
-                  })
-              }
-           
-          }
-  } catch (error) {
-      return res.status(500).json({
-          message:error
-      })
-  }
- }
-
- export const removeWishList = async (req, res) => {
-  try {
-      const userId = req.params.userId;
-      const  {_id}  = req.body;
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({
-            message: 'Người dùng không tồn tại'
-        });
+    const { error } = userSchema.validate(req.body);
+    if (error) {
+      console.log("error", error);
+      return res.status(400).json({
+        message: error.details[0].message,
+      });
     }
-    user.wishList = user.wishList.filter(item =>item._id.toString() !== _id.toString());
-  //   console.log(user.wishList);
-    
-    // Lưu người dùng với danh sách yêu thích đã được cập nhật
-    const updatedUser = await user.save();
-      res.status(200).json({
-          message: 'Xóa danh sách yêu thích thành công',
-          wishList: updatedUser
-      })
-      
+    const { userId } = req.params
+
+    const lockByUser = await User.findById(userId);
+    if (!lockByUser) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isBlocked: lockByUser.isBlocked ? false : true },
+      { new: true }
+    )
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+    sendMail(user.name, user.email)
+
+    return res.status(200).json({
+      message: "Khóa người dùng thành công",
+      data: user
+    })
+
   } catch (error) {
     return res.status(500).json({
-      message:error
-  })
+      message: error
+    })
   }
 }
-export const updateAvatar = async (req,res) => {
+
+export const getWishListByUser = async (req, res) => {
+  try {
+    const id = req.params.userId;
+    const user = await User.findById(id);
+    if (!user) {
+      res.status(404).json({
+        message: "User không tồn tại"
+      })
+    } else {
+      res.status(200).json({
+        message: "Danh sách yêu thích",
+        wishList: user.wishList
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+export const addRemoveWishLish = async (req, res) => {
+  try {
+    const user = req.user
+    if (!user) {
+      return res.status(404).json({
+        message: "Bạn cần đăng nhập để thực hiện chức năng này"
+      })
+    }
+    const itemToAdd = req.body;
+    console.log(itemToAdd);
+    console.log(user);
+    const { _id } = req.body;
+    if (_id) {
+      user.wishList = user.wishList.filter(item => item._id.toString() !== _id.toString());
+      // Lưu người dùng với danh sách yêu thích đã được cập nhật
+      const updatedUser = await user.save();
+      res.status(200).json({
+        message: 'Xóa danh sách yêu thích thành công',
+        wishList: updatedUser
+      })
+    } else {
+      const existingItem = user.wishList.find(item => item.name === itemToAdd.name);
+      if (existingItem) {
+        res.status(404).json({
+          message: 'Đã tồn tại trong danh sách yêu thích'
+        })
+      } else {
+        user.wishList.push(itemToAdd);
+        const addWishList = await user.save();
+        res.status(200).json({
+          message: "Thêm danh sách yêu thích thành công",
+          wishList: addWishList
+        })
+      }
+
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+
+export const removeWishList = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { _id } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: 'Người dùng không tồn tại'
+      });
+    }
+    user.wishList = user.wishList.filter(item => item._id.toString() !== _id.toString());
+    //   console.log(user.wishList);
+
+    // Lưu người dùng với danh sách yêu thích đã được cập nhật
+    const updatedUser = await user.save();
+    res.status(200).json({
+      message: 'Xóa danh sách yêu thích thành công',
+      wishList: updatedUser
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+export const updateAvatar = async (req, res) => {
   try {
     const { userId } = req.params
     const fileImages = req.files;
     if (!fileImages || fileImages.length === 0) {
-        return res.status(400).json({
-            error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
-        });
+      return res.status(400).json({
+        error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
+      });
     }
     const user = await User.findById(userId);
     const oldImagePath = user.avatar;
     const imagePath = fileImages[0].path;
     console.log(oldImagePath);
-    
-    if(!oldImagePath || oldImagePath.length === 0){
+
+    if (!oldImagePath || oldImagePath.length === 0) {
       await User.findByIdAndUpdate(
-        {_id:userId},
-        { avatar:imagePath},
-        {new:true})
-    return res.status(200).json({
-      message:"Update avatar 111 user thành công",
-      user
-    })
-  }else{
-    const publicId = oldImagePath.split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ đường dẫn 
-    await cloudinary.uploader.destroy(publicId);
-    await User.findByIdAndUpdate(
-      {_id:userId},
-      {avatar:imagePath},
-      {new:true}
+        { _id: userId },
+        { avatar: imagePath },
+        { new: true })
+      return res.status(200).json({
+        message: "Update avatar 111 user thành công",
+        user
+      })
+    } else {
+      const publicId = oldImagePath.split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ đường dẫn 
+      await cloudinary.uploader.destroy(publicId);
+      await User.findByIdAndUpdate(
+        { _id: userId },
+        { avatar: imagePath },
+        { new: true }
       )
-        return res.status(200).json({
-            message:"Update avatar 222 user thành công",
-            user
-          })
-  }
-    
- 
-   
-   
+      return res.status(200).json({
+        message: "Update avatar 222 user thành công",
+        user
+      })
+    }
+
+
+
+
   } catch (error) {
     return res.status(500).json({
-      message:error
-  })
+      message: error
+    })
   }
 }
