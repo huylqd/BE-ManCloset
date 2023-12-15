@@ -28,9 +28,13 @@ const addressSchema = new mongoose.Schema(
   }
 )
 const wishListSchema = new mongoose.Schema({
-  name:{type:String,require:true},
-  imageUrl:{type:String,require:true},
-  price:{type:Number,require:true}
+  // name:{type:String,require:true},
+  // imageUrl:{type:String,require:true},
+  // price:{type:Number,require:true}
+  products:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Products",
+  }
 })
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
@@ -41,6 +45,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   avatar:{
     type:String,
     require:true,
+    default: "https://inkythuatso.com/uploads/thumbnails/800/2023/03/9-anh-dai-dien-trang-inkythuatso-03-15-27-03.jpg"
   },
   email: {
     type: String,
@@ -61,8 +66,8 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     default: []
   },
   phone:{
-    type:Number,
-    
+    type: String,
+    default: ""
   },
   wishList:{
     type:[wishListSchema],

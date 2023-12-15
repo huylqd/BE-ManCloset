@@ -242,10 +242,6 @@ export const updateAddress = async (req, res) => {
       });
     }
 
-    // user.address[addressIndex].city = updateAddressData.city;
-    // user.address[addressIndex].district = updateAddressData.district;
-    // user.address[addressIndex].wards = updateAddressData.wards;
-    // user.address[addressIndex].detailAdress = updateAddressData.detailAdress;
     if (
       "isDefault" in updateAddressData &&
       updateAddressData.isDefault === true
@@ -355,6 +351,36 @@ export const getUserAddress = async (req: Request, res: Response) => {
       results: user.address,
     });
   } catch (error) {
+    return res.status(500).json({
+      message: error,
+    });
+  }
+}
+
+export const getAllContact = async (req: Request, res: Response) => {
+  console.log(req.body);
+
+  try {
+    const contacts = await User.find({
+      _id: {
+        $ne: req.params.id
+      }
+    }).select([
+      'email',
+      'name',
+      'avatar',
+      '_id'
+    ])
+
+    if (!contacts) {
+      return res.status(400).json({
+        message: 'Get contacts fail'
+      })
+    }
+    return res.status(200).json(contacts)
+  } catch (error) {
+    console.log(error);
+
     return res.status(500).json({
       message: error,
     });

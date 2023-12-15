@@ -5,7 +5,7 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'
 dotenv.config()
-const {CUSTOMER_ID,CUSTOMER_SECRET_CODE,ACCESSTOKEN_SECRET} = process.env
+const {CUSTOMER_ID,CUSTOMER_SECRET_CODE,ACCESSTOKEN_SECRET,REFESHTOKEN_SECRET} = process.env
 passport.use(new GoogleStrategy({
     clientID: CUSTOMER_ID,
     clientSecret: CUSTOMER_SECRET_CODE,
@@ -17,9 +17,12 @@ passport.use(new GoogleStrategy({
             googleId: profile.id,
             authType: "google"
         })
+        console.log(isExitUser);
+        
         if (isExitUser) {
-            const token = jwt.sign({ id: isExitUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
-            return done(null, { user: isExitUser, accessToken: token });
+            const token = jwt.sign({ _id: isExitUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
+            const refreshToken = jwt.sign({ _id: isExitUser._id }, REFESHTOKEN_SECRET , { expiresIn: "4h" })
+            return done(null, { user: isExitUser, accessToken: token, refreshToken:refreshToken  });
         } else {
             try {
                 const newUser = new Auth({
@@ -30,9 +33,11 @@ passport.use(new GoogleStrategy({
                     avatar:  profile.picture,                                      
                     password: "Không có mật khẩu",
                 });
+               
+                const token = jwt.sign({ _id: newUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
+                const refreshToken = jwt.sign({ _id: newUser._id },REFESHTOKEN_SECRET , { expiresIn: "4h" })
                 await newUser.save();
-                const token = jwt.sign({ id: newUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
-                done(null, { user: newUser, accessToken: token });
+                done(null, { user: newUser, accessToken: token, refreshToken:refreshToken });
             } catch (error) {
                 // Xử lý lỗi chèn (trường hợp trùng lặp)
                 if (error.code === 11000) {
@@ -46,15 +51,24 @@ passport.use(new GoogleStrategy({
     }
 ));
 
-passport.serializeUser(({ user, accessToken }, done) => {
-    done(null, { user, accessToken })
+passport.serializeUser(({ user, accessToken,refreshToken }, done) => {
+    done(null, { user, accessToken,refreshToken })
 });
-passport.deserializeUser(({ user, accessToken }, done) => {
-    done(null, { user, accessToken })
+passport.deserializeUser(({ user, accessToken,refreshToken }, done) => {
+    done(null, { user, accessToken,refreshToken })
 });
 
 export const LoginWithGoogle = (req, res) => {
-    const { accessToken,user } = req.user;
+    const { accessToken,user,refreshToken } = req.user;
+
+    
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: false,
+        secure: false,
+        path: "/",
+        // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
+        sameSite: "strict"
+    })
     res.cookie("accessToken", accessToken, {
         httpOnly: false,
         secure: false,
@@ -62,6 +76,7 @@ export const LoginWithGoogle = (req, res) => {
         // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
         sameSite: "strict"
     })
+   
     res.cookie("user", JSON.stringify(user), {
         httpOnly: false,
         secure: false,
