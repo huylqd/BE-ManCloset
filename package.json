@@ -41,6 +41,7 @@
         "passport": "^0.7.0",
         "passport-google-oauth2": "^0.2.0",
         "pdfkit": "^0.14.0",
+        "socket.io": "^4.7.2",
         "ts-node": "^10.9.1",
         "unidecode": "^0.1.8",
         "vite": "^4.1.4",
