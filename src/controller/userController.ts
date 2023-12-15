@@ -360,6 +360,34 @@ export const getUserAddress = async (req: Request, res: Response) => {
   }
 }
 
+export const getAllContact = async (req: Request, res: Response) => {
+  console.log(req.body);
+  
+  try {
+    const contacts = await User.find({_id: {
+      $ne: req.params.id
+    }}).select([
+      'email',
+      'name',
+      'avatar',
+      '_id'
+    ])
+  
+    if(!contacts) {
+      return res.status(400).json({
+        message: 'Get contacts fail'
+      })
+    }
+    return res.status(200).json(contacts)
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(500).json({
+      message: error,
+    });
+  }
+}
+
 export const deleteUser = async (req, res) => {
       }
 
