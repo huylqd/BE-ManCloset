@@ -1,5 +1,5 @@
 import order from "../model/order";
-
+import product from "../model/product";
 // Kiểm tra xem có tài liệu nào có order_id cụ thể không
 export const checkOrderSuccessVnPay = async (transactionId) => {
   try {
@@ -18,8 +18,33 @@ export const checkOrderSuccessVnPay = async (transactionId) => {
       },
       { new: true }
     );
-    console.log("vnpay",);
-    
+    const items = result.items;
+    for (const item of items) {
+      const result = await product.findOne({ _id: item.product_id });
+
+      if (!result) {
+        return {message: "Product not found"}
+      }
+
+      const selectedColor: any = result.properties.find(
+        (prop) => prop.color === item.property.color
+      );
+      const selectedVariant = selectedColor.variants.find(
+        (variant) => variant.size === item.property.size
+      );
+
+      if (
+        !selectedVariant ||
+        selectedVariant.quantity < item.property.quantity
+      ) {
+        return {
+          message: "Không tồn tại màu hoặc hết hàng"
+        }
+      } else {
+        selectedVariant.quantity -= item.property.quantity;
+        await result.save();
+      }
+    }
     if (result) {
       return { message: "Tài liệu tồn tại" };
     } else {
@@ -41,3 +66,24 @@ export const checkOrderFailedVnPay = async (transactionId) => {
     return { message: "Lỗi" };
   }
 };
+export const checkUserInOrder = async (userId) => {
+  try {
+    const result = await order.find({user_id:userId});
+    if(!result || result.length === 0 ){
+      return {
+        status: -1,
+        message:"User không mua hàng"
+      }
+    }
+    return {
+      status:0,
+      message:"User đã tồn tại"
+    }
+  } catch (error) {
+    return {
+      status: -1,
+      message:"Lỗi kiểm tra tài liệu"
+    }
+  }
+
+}
