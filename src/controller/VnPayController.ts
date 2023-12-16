@@ -7,6 +7,7 @@ import {
   checkOrderSuccessVnPay,
 } from "../service/orderService";
 import Bill from "../model/order";
+import { sendMailPaid } from "../utils/sendMail";
 dotenv.config();
 
 export const create_payment_url = async (req, res) => {
