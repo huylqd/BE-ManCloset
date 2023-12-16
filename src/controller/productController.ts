@@ -37,7 +37,7 @@ export const getAllProduct = async (req: any, res: any) => {
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) throw new Error("Product not found"); 
+    if (!product) throw new Error("Product not found");
     product.views++;
     await product.save();
     return res.status(200).json({ data: product });
@@ -49,50 +49,46 @@ export const getProductById = async (req: Request, res: Response) => {
 
 
 export const createProduct = async (req: any, res: Response) => {
-    try {
-      const { error } = productSchema.validate(req.body, { abortEarly: false });
-      if (error) {
-        const errors = error.details.map((message) => ({ message }));
-        return res.status(400).json({ errors });
-      }
-   
+  try {
+    const { error } = productSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errors = error.details.map((message) => ({ message }));
+      return res.status(400).json({ errors });
+    }
 
-    
-      const fileImages = req.files;
-      if (!fileImages || fileImages.length === 0) {
-          return res.status(400).json({
-              error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
-          });
-      }
-      const imagePaths = fileImages.map(file => file.path);
-      // const propertiesWithImages = imagePaths.map(imagePath => ({ imageUrl: imagePath }));
-      // Thêm sản phẩm vào database
-      const updatedProperties = req.body.properties.map((property, index) => ({
-        ...property,
-        imageUrl: imagePaths[index],
-    }));
-      const product = await Product.create(
-        {
-          ...req.body,
-          properties: updatedProperties,
-        }
-      );
-
-      await Category.findOneAndUpdate(product.categoryId, {
-        $addToSet: {
-          products: product._id,
-        },
-      });
-      return res.status(200).json({
-        product,
-      });
-    } catch (error) {
+    const fileImages = req.files;
+    if (!fileImages || fileImages.length === 0) {
       return res.status(400).json({
-        message: "Thêm sản phẩm không thành công",
-        error: error.message,
+        error: "Vui lòng tải lên ít nhất một hình ảnh sản phẩm",
       });
     }
-  };
+    const imagePaths = fileImages.map((file) => file.path);
+    // const propertiesWithImages = imagePaths.map(imagePath => ({ imageUrl: imagePath }));
+    // Thêm sản phẩm vào database
+    const updatedProperties = req.body.properties.map((property, index) => ({
+      ...property,
+      imageUrl: imagePaths[index],
+    }));
+    const product = await Product.create({
+      ...req.body,
+      properties: updatedProperties,
+    });
+
+    await Category.findOneAndUpdate(product.categoryId, {
+      $addToSet: {
+        products: product._id,
+      },
+    });
+    return res.status(200).json({
+      product,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Thêm sản phẩm không thành công",
+      error: error.message,
+    });
+  }
+};
 export const updateProduct = async (req: any, res: Response) => {
   try {
     const { error } = productSchema.validate(req.body, { abortEarly: false });
@@ -101,31 +97,32 @@ export const updateProduct = async (req: any, res: Response) => {
         messages: error.details.map((message) => ({ message })),
       });
     }
-   
 
     const fileImages = req.files;
     if (!fileImages || fileImages.length === 0) {
-        return res.status(400).json({
-            error: 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm',
-        });
+      return res.status(400).json({
+        error: "Vui lòng tải lên ít nhất một hình ảnh sản phẩm",
+      });
     }
-    const imagePaths = fileImages.map(file => file.path);
+    const imagePaths = fileImages.map((file) => file.path);
     const updatedProperties = req.body.properties.map((property, index) => ({
       ...property,
       imageUrl: imagePaths[index],
-  }));
+    }));
     // Tìm sản phẩm theo id và cập nhật dữ liệu mới
-  const productId = req.params.id;
-   const product = await Product.findById(productId);
-  
-  
-   const oldImagePath = product.properties?.map((property) => {
-      return property.imageUrl
-   })
- 
-   const publicId = oldImagePath[0].split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ đường dẫn 
+    const productId = req.params.id;
+    const product = await Product.findById(productId);
 
-   
+    const oldImagePath = product.properties?.map((property) => {
+      return property.imageUrl;
+    });
+
+    const publicId = oldImagePath[0]
+      .split("/")
+      .slice(-2)
+      .join("/")
+      .split(".")[0]; // Lấy public_id từ đường dẫn
+
     await cloudinary.uploader.destroy(publicId);
     const updatedProduct = await Product.findOneAndUpdate(
       { _id: productId },
@@ -133,7 +130,7 @@ export const updateProduct = async (req: any, res: Response) => {
         ...req.body,
         properties: updatedProperties,
       },
-     
+
       { new: true }
     );
     if (!updatedProduct) {
@@ -143,7 +140,7 @@ export const updateProduct = async (req: any, res: Response) => {
     // Xóa sản phẩm cũ khỏi danh sách products của category cũ
     const oldCategoryId = updatedProduct.categoryId;
     await Category.findByIdAndUpdate(oldCategoryId, {
-      $pull: { products: productId }, 
+      $pull: { products: productId },
     });
 
     // Thêm sản phẩm mới vào danh sách products của category mới
@@ -176,10 +173,12 @@ export const removeProduct = async (req: Request, res: Response) => {
     if (product.properties && product.properties.length > 0) {
       for (const property of product.properties) {
         if (property.imageUrl) {
-        
-            const publicId = property.imageUrl.split('/').slice(-2).join('/').split('.')[0]; // Lấy public_id từ URL
-            await cloudinary.uploader.destroy(publicId);
-         
+          const publicId = property.imageUrl
+            .split("/")
+            .slice(-2)
+            .join("/")
+            .split(".")[0]; // Lấy public_id từ URL
+          await cloudinary.uploader.destroy(publicId);
         }
       }
     }
@@ -312,7 +311,6 @@ export const FilterProductByPrice = async (req, res) => {
           message: "Không có sản phẩm bạn muốn tìm",
         });
       }
-    
       return res.status(200).json({
         message: "Lấy sản phẩm thành công",
         data: products.docs,
@@ -323,7 +321,8 @@ export const FilterProductByPrice = async (req, res) => {
           sizePerPage:products.limit
         }
       });
-    }  
+    }
+  
   } catch (error) {
     return res.status(500).json({
       message: error.message,
@@ -403,11 +402,23 @@ export const getProductByCategoryId = async (req: any, res: Response ) => {
       }
        });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
+export const FilterProductByDiscount = async (req: Request, res: Response) => {
+  try {
+    const { categoryId } = req.params;
 
-
-// End
+    const discountedProducts = await Product.find({
+      categoryId: categoryId,
+      discount: { $gt: 0 },
+    }).sort({ discount: -1 });
+    if (!discountedProducts) throw new Error("Product not found");
+    return res.status(200).json({ discountedProducts });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+  
 

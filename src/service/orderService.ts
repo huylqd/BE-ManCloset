@@ -18,6 +18,8 @@ export const checkOrderSuccessVnPay = async (transactionId) => {
       },
       { new: true }
     );
+    console.log("vnpay",);
+    
     if (result) {
       return { message: "Tài liệu tồn tại" };
     } else {

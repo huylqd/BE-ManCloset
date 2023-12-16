@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import Comment from "../model/comment";
 import { commentSchema } from "../schema/commentSchema";
 
-export const getAllCommentById = async (req: Request, res: Response) => {
+export const getAllCommentByProductId = async (req: Request, res: Response) => {
   try {
-    const { user_id } = req.params;
-    const comment = await Comment.find({ user_id: user_id }).sort({
-      createAt: -1,
+    const { prd_id } = req.params;
+    const comment = await Comment.find({ product_id: prd_id }).sort({
+      createdAt: -1,
     });
     if (!comment) {
       res.status(404).json({
@@ -14,7 +14,7 @@ export const getAllCommentById = async (req: Request, res: Response) => {
       });
     }
     return res.status(200).json({
-      message: "Lấy tất cả comment theo người dùng",
+      message: "Lấy tất cả comment theo sản phẩm ",
       data: comment,
     });
   } catch (error) {
@@ -45,8 +45,14 @@ export const getAllComment = async (req: Request, res: Response) => {
   }
 };
 
-export const createComment = async (req: Request, res: Response) => {
+export const createComment = async (req: any, res: Response) => {
   try {
+    const user = req.user;
+    if (!user) {
+      return res.status(500).json({
+        message: "Vui lòng đăng nhập để comment"
+      })
+    }
     const { error } = commentSchema.validate(req.body);
     if (error) {
       const errors = error.details.map((message) => ({ message }));
@@ -54,7 +60,12 @@ export const createComment = async (req: Request, res: Response) => {
         message: errors,
       });
     }
-    const comment = await Comment.create(req.body);
+
+    const data = {
+      user_id: user._id,
+      ...req.body
+    };
+    const comment = await Comment.create(data);
     if (!comment) {
       return res.status(404).json({
         message: "Thêm bình luận không thành công ",

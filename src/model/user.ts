@@ -45,6 +45,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   avatar:{
     type:String,
     require:true,
+    default: "https://inkythuatso.com/uploads/thumbnails/800/2023/03/9-anh-dai-dien-trang-inkythuatso-03-15-27-03.jpg"
   },
   email: {
     type: String,
@@ -65,8 +66,8 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     default: []
   },
   phone:{
-    type:Number,
-    
+    type: String,
+    default: ""
   },
   wishList:{
     type:[wishListSchema],

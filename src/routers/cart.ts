@@ -13,7 +13,7 @@ const router = express.Router();
 router.get("/cart",(req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(getAllProductInCart));
 
 // add to cart
-router.post("/cart/add-to-cart", (req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(addProductToCard));
+router.patch("/cart/add-to-cart", (req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(addProductToCard));
 
 // delete product
 router.put("/cart/:id", deleteProductInCart)
