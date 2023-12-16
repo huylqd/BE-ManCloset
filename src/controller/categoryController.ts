@@ -1,3 +1,4 @@
+import { ICate } from "../interface/category";
 import Category from "../model/category";
 import Product from "../model/product";
 import { categorySchema } from "../schema/categorySchema";
@@ -68,6 +69,10 @@ export const getAllCategory = async (req: any, res: any) => {
       });
     }else{
       // const searchDataCategory = await searchData(result);
+  //   const getAllCategory = await (await Category.find()).filter((cate:ICate) => !cate.deleted)
+  //   console.log(getAllCategory);
+
+  //  const totalPage = Math.ceil(getAllCategory.length / result.limit);
       
       
       // const categoryResponse =  await { ...result, docs: searchDataCategory };
@@ -77,8 +82,8 @@ export const getAllCategory = async (req: any, res: any) => {
         data: result.docs,
         paginate: {
           currentPage: result.page,
-          totalPages: result.totalPages,
-          totalItems: result.totalDocs,
+          totalPages:result.totalPages,
+          totalItems:result.totalDocs,
           limit:result.limit
         },
       });
@@ -120,6 +125,13 @@ export const updateCategory = async (req: any, res: any) => {
       console.log("error", error);
       return res.status(400).json({
         message: error.details[0].message,
+      });
+    }
+    const { name } = req.body;
+    const categoryExists = await Category.findOne({ name });
+    if (categoryExists) {
+      return res.status(404).json({
+        message: "Danh mục đã tồn tại",
       });
     }
     const { id } = req.params;
@@ -177,3 +189,33 @@ export const removeCategory = async (req: any, res: any) => {
     });
   }
 };
+export const getAllCategoryDeleted = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    
+  }
+}
+export const remove = async (req,res) => {
+  try {
+    const id = req.params.id
+    const updateDeleted = {
+      deleted: true,
+      deletedAt: new Date()
+    }
+    const category = await Category.findByIdAndUpdate({_id:id},updateDeleted,{new:true});
+    if(!category) {
+      return res.status(400).json({
+        message: "Lỗi khi xóa danh mục",
+    })
+    }
+    return res.status(200).json({
+      message: "Xoá danh mục thành công chuyển sang thùng rác",
+      data:category
+  })
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+  })
+  }
+}

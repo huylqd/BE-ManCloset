@@ -48,7 +48,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
 
 
-  export const createProduct = async (req: any, res: Response) => {
+export const createProduct = async (req: any, res: Response) => {
     try {
       const { error } = productSchema.validate(req.body, { abortEarly: false });
       if (error) {
@@ -201,67 +201,127 @@ export const removeProduct = async (req: Request, res: Response) => {
     });
   }
 };
+export const remove = async (req,res) => {
+  try {
+    const id = req.params.id
+    const updateDeleted = {
+      deleted: true,
+      deletedAt: new Date()
+    }
+    const product = await Product.findByIdAndUpdate({_id:id},updateDeleted,{new:true});
+    if(!product) {
+      return res.status(400).json({
+        message: "Lỗi khi xóa sản phảm",
+    })
+    }
+    return res.status(200).json({
+      message: "Xoá sản phẩm thành công chuyển sang thùng rác",
+      data:product
+  })
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+  })
+  }
+}
 
+export const getAllDeleted = async (req: Request, res: Response) => {
+  try {
+    const product = await Product.find({ deleted: false });
+    if (!product ) {
+      return res.status(400).json({
+        message: "Không có sản phẩm nào bị xóa",  
+      });
+    }
+        return res.status(200).json({
+            message: "Lấy tất cả sản phẩm đã bị xóa",
+            product
+        });
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+  })
+  }
+}
 
 // Start filter Product
 export const FilterProductByPrice = async (req, res) => {
-  const { minPrice, maxPrice, sortType } = req.query;
+  const { 
+    minPrice,
+    maxPrice,
+    _page = 1,
+    _limit = _page == 0 ? 10000000 : 8,
+    _sort = "createdAt",
+    _order = "asc",
+     } = req.query;
+     const options: any = {
+      page: _page,
+      limit: _limit,
+      sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+    };
+  
   try {
     if(minPrice && maxPrice) {
-      let products = await Product.find({
+      let products = await Product.paginate({
         price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
-      });
+      },options);
       if (products.length === 0) {
         return res.status(404).json({
           message: "Không có sản phẩm bạn muốn tìm",
         });
       }
-      if (sortType === "desc") {
-        products.sort((a, b) => b.price - a.price);
-      } else {
-        products.sort((a, b) => a.price - b.price);
-      }
+    
       return res.status(200).json({
         message: "Lấy sản phẩm thành công",
-        data: products,
+        data: products.docs,
+        pagination:{
+          currentPage:products.page,
+          totalsPages:products.totalPages,
+          totalItem:products.totalDocs,
+          sizePerPage:products.limit
+        }
       });
     }
-    if(minPrice ){
-    let products = await Product.find({
-      price: { $lte: Number(minPrice) },
-    });
+    if(minPrice){
+    let products = await Product.paginate({
+      price: { $gte: Number(minPrice) },
+    },options);
     if (products.length === 0) {
       return res.status(404).json({
         message: "Không có sản phẩm bạn muốn tìm",
       });
     }
-    if (sortType === "desc") {
-      products.sort((a, b) => b.price - a.price);
-    } else {
-      products.sort((a, b) => a.price - b.price);
-    }
+   
     return res.status(200).json({
       message: "Lấy sản phẩm thành công",
-      data: products,
+      data: products.docs,
+      pagination:{
+        currentPage:products.page,
+        totalsPages:products.totalPages,
+        totalItem:products.totalDocs,
+        sizePerPage:products.limit
+      }
     });
     }
     if(maxPrice){
-      let products = await Product.find({
-        price: {  $gte: Number(maxPrice) },
-      });
+      let products = await Product.paginate({
+        price: {  $lte: Number(maxPrice) },
+      },options);
       if (products.length === 0) {
         return res.status(404).json({
           message: "Không có sản phẩm bạn muốn tìm",
         });
       }
-      if (sortType === "desc") {
-        products.sort((a, b) => b.price - a.price);
-      } else {
-        products.sort((a, b) => a.price - b.price);
-      }
+    
       return res.status(200).json({
         message: "Lấy sản phẩm thành công",
-        data: products,
+        data: products.docs,
+        pagination:{
+          currentPage:products.page,
+          totalsPages:products.totalPages,
+          totalItem:products.totalDocs,
+          sizePerPage:products.limit
+        }
       });
     }  
   } catch (error) {
@@ -272,17 +332,29 @@ export const FilterProductByPrice = async (req, res) => {
 };
 // Lọc sản phẩm theo size
 export const FilterProductBySize = async (req, res) => {
+  const { 
+    _page = 1,
+    _limit = _page == 0 ? 10000000 : 8,
+    _sort = "createdAt",
+    _order = "asc",
+    _size
+     } = req.query;
+     const options: any = {
+      page: _page,
+      limit: _limit,
+      sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+    };
   try {
-    const { size } = req.params;
-    const filteredProducts = await Product.find({
+  
+    const filteredProducts = await Product.paginate({
       'properties': {
         $elemMatch: {
           'variants': {
-            $elemMatch: { 'size': size }
+            $elemMatch: { 'size': _size }
           }
         }
       }
-    });
+    },options);
     if(filteredProducts.length === 0){
       return res.status(404).json({ 
         message:"Không có sản phẩm nào bạn muốn tìm"
@@ -290,7 +362,13 @@ export const FilterProductBySize = async (req, res) => {
     }
     return res.status(200).json({
       message: "Lọc sản phẩm thành công",
-      data: filteredProducts,
+      data: filteredProducts.docs,
+      pagination:{
+        currentPage:filteredProducts.page,
+        totalsPages:filteredProducts.totalPages,
+        totalItem:filteredProducts.totalDocs,
+        sizePerPage:filteredProducts.limit
+      }
     });
   } catch (error) {
     return res.status(500).json({
@@ -299,12 +377,31 @@ export const FilterProductBySize = async (req, res) => {
   }
 };
 // Lấy sản phẩm theo categoryId
-export const getProductByCategoryId = async (req: Request, res: Response ) => {
+export const getProductByCategoryId = async (req: any, res: Response ) => {
+  const { 
+    _page = 1,
+    _limit = _page == 0 ? 1000000000 : 8,
+    _sort = "createdAt",
+    _order = "asc",
+     } = req.query;
+     const options: any = {
+      page: _page,
+      limit: _limit,
+      sort: { [_sort as string]: _order === "desc" ? -1 : 1 },
+    };
   try {
     const {categoryId} = req.params;
-    const product = await Product.find({categoryId: categoryId});
+    const product = await Product.paginate({categoryId: categoryId},options);
     if (!product) throw new Error("Product not found");
-    return res.status(200).json({ data: product });
+    return res.status(200).json({
+       data: product.docs,
+       pagination:{
+        currentPage:product.page,
+        totalsPages:product.totalPages,
+        totalItem:product.totalDocs,
+        sizePerPage:product.limit
+      }
+       });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }

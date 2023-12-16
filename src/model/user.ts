@@ -92,7 +92,6 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   },
 },
   { timestamps: true, versionKey: false }
-
 );
 userSchema.plugin(mongoosePaginate)
 const User = mongoose.model<IUser, mongoose.PaginateModel<IUser>>(
