@@ -40,67 +40,67 @@ export const addProductToCard = async (
   next: NextFunction
 ) => {
   const { product, user_id } = req.body;
-  const { _id } = product;
-
-  // const objUserId = new ObjectId(user_id)
-  // console.log(user_id)
-  // kiem tra san pham co ton tai trong products khong
 
   const userCart = await Cart.findOne({
     user_id: user_id,
   });
 
-  if(!userCart){
+  if (!userCart) {
     return res.status(404).json({
-      message: "Khong tim thay gio hang"
-    })
+      message: "Khong tim thay gio hang",
+    });
   }
 
-  const productsInCart = userCart.products
+  const isProductExistInCart = userCart.products.find((item) => {
+    if (
+      item._id.toString() === product._id.toString() &&
+      item.color === product.color &&
+      item.size === product.size
+    ) {
+      return true;
+    }
+    return false;
+  });
 
-  if (!productsInCart || productsInCart.length === 0) {
-    // neu san pham chua ton tai, them san pham vao products []
-    const productAddToCart = {
-      ...product,
-      addedAt: new Date(),
-      updatedAt: new Date(),
-    };
-
+  if (!isProductExistInCart) {
     await Cart.updateOne(
-      { user_id: user_id },
+      {
+        user_id: user_id,
+      },
       {
         $push: {
-          products: productAddToCart,
+          products: product,
         },
       }
     );
   } else {
-    // neu san pham da ton tai, cap nhat san pham
-    const newQuantity = product.quantity;
-    const newUpdatedAt = new Date();
-
     await Cart.updateOne(
       {
         user_id: user_id,
         products: {
           $elemMatch: {
-            _id: _id
-          }
-        }
+            _id: product._id,
+          },
+        },
       },
       {
         $inc: {
-          "products.$.quantity": newQuantity,
+          "products.$.quantity": product.quantity,
         },
         $set: {
-          "products.$.updatedAt": newUpdatedAt,
+          "products.$.updatedAt": new Date(),
         },
       }
     );
   }
 
+  const cartUpdated = await Cart.findOne({
+    user_id: user_id,
+  });
+
   return res.status(HTTP_STATUS.OK).json({
     message: "Thêm sản phẩm thành công",
+    result: cartUpdated.products,
   });
 };
 
@@ -134,6 +134,63 @@ export const deleteProductInCart = async (req: any, res: Response) => {
   } catch (error) {
     return res.status(400).json({
       message: error.message,
+    });
+  }
+};
+
+export const updateProductInCart = async (req: Request, res: Response) => {
+  try {
+    const { user_id, id } = req.params;
+    const { color, size } = req.query;
+    const { quantity } = req.body;
+
+    const cart = await Cart.findOne({
+      user_id: user_id,
+    });
+
+    if (!cart) {
+      return res.status(404).json({
+        message: "Không tìm thấy giỏ hàng",
+      });
+    }
+
+    if (quantity) {
+      await Cart.updateOne(
+        {
+          user_id: user_id,
+          products: {
+            $elemMatch: {
+              _id: id,
+              color: color,
+              size: size,
+            },
+          },
+        },
+        {
+          $set: {
+            "products.$.quantity": quantity,
+            "products.$.updatedAt": new Date(),
+          },
+        },
+        { new: true }
+      );
+    }
+
+    const cartUpdated = await Cart.findOne({ user_id: user_id });
+    const productUpdated = cartUpdated.products.find((item) => {
+      if(item._id.toString() === id && item.color === color && item.size === size){
+        return true
+      }
+      return false
+    });
+
+    return res.status(200).json({
+      message: "Cập nhật sản phẩm thành công",
+      result: productUpdated,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
     });
   }
 };

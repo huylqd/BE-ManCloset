@@ -10,6 +10,7 @@ import {
   FilterProductByPrice,
   remove,
   getAllDeleted,
+  getInventoryOfProduct,
   
 } from "../controller/productController";
 import { uploadImage } from "../config/cloudinary";
@@ -28,5 +29,7 @@ router.delete("/products/:id",(req, res, next) => { checkPermission(req, res, ne
 router.patch("/products/remove/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, remove);
 router.get("/products/size/filter",FilterProductBySize)
 router.get("/products/price/filter",FilterProductByPrice)
+
+router.get("/products/:id/inventory", getInventoryOfProduct)
 
 export default router;

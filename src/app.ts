@@ -20,6 +20,7 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import socket, { Server, Socket }  from "socket.io";
 import http from "http";
+import { SocketServer } from "./config/socket";
 //Config express
 const app: any = express();
 dotenv.config();
@@ -80,7 +81,7 @@ db.on("error", (error) => {
 // });
 
 const server = http.createServer(app);
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000"
   }
@@ -88,20 +89,24 @@ const io = new Server(server, {
 
 var onlineUsers = new Map();
 
-io.on('connection', (socket) => {
-  global.chatSocket = socket;
+// io.on('connection', (socket) => {
+//   global.chatSocket = socket;
 
-  socket.on("addUser", (userId) => {
-    onlineUsers.set(userId, socket.id)
-  })
+//   socket.on("addUser", (userId) => {
+//     onlineUsers.set(userId, socket.id)
+//   })
 
-  socket.on('sendMsg', (data) => {
-    const sendUserSocket = onlineUsers.get(data.to);
-    if(sendUserSocket) {
-      socket.to(sendUserSocket).emit('msg-recieve', data.msg)
-    }
-  })
-})
+//   socket.on('sendMsg', (data) => {
+//     const sendUserSocket = onlineUsers.get(data.to);
+//     if(sendUserSocket) {
+//       socket.to(sendUserSocket).emit('msg-recieve', data.msg)
+//     }
+//   })
+// })
+
+io.on("connection", (socket:Socket) => SocketServer(socket))
+
+
 server.listen(process.env.port || port, () => {
   console.log(`App running on port ${process.env.port || port}`);
 });
