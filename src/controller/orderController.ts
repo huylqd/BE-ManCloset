@@ -23,6 +23,8 @@ import {
 import { SortOrder } from "mongoose";
 import { checkInteger } from "../utils/checkNumber";
 import { dataQuery } from "../utils/dataQuery";
+import { sendMailOrder } from "../utils/sendMail";
+import { SendMailOrderSuccess } from "../service/sendMailService";
 
 export const getAllBill = async (req: Request, res: Response) => {
   const {
@@ -99,7 +101,7 @@ export const getBills = async (req: Request, res: Response) => {
       .skip(+options.page * +options.limit)
       .limit(+options.limit)
 
-      const results = dataQuery(totalBill, +options.limit, +options.page);
+    const results = dataQuery(totalBill, +options.limit, +options.page);
 
     if (bills.length === 0) {
       return res.status(200).json({
@@ -329,6 +331,7 @@ export const updateBill = async (req: Request, res: Response) => {
         status: stringToOrderStatus(orderStatus),
         updatedAt: new Date(),
       };
+
     }
 
     if (paymentStatus) {
@@ -339,7 +342,12 @@ export const updateBill = async (req: Request, res: Response) => {
     }
 
     await bill.save();
-
+    if (bill.current_order_status.status === "Đã xác nhận") {
+      SendMailOrderSuccess(bill)
+    }
+    if (bill.current_order_status.status === "Đã giao") {
+      SendMailOrderSuccess(bill)
+    }
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
       data: bill,
