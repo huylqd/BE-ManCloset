@@ -3,6 +3,7 @@ import HTTP_STATUS from "../constants/httpStatus";
 import { AddToCartReqBody } from "../model/requests/cart.requests";
 import { ParamsDictionary } from "express-serve-static-core";
 import Cart from "../model/cart";
+import Product from "../model/product";
 import { ObjectId } from "mongodb";
 /**
  * @Description: get all product in cart
@@ -62,6 +63,20 @@ export const addProductToCard = async (
     return false;
   });
 
+  const productAdding = await Product.findOne({
+    _id: product._id,
+  });
+
+  if(!product){
+    return res.status(404).json({
+      message: "Không tìm thấy sản phẩm"
+    })
+  }
+
+  const indexOfColor = productAdding.properties.findIndex(item => item.color === product.color)
+  const indexOfSize = productAdding.properties[indexOfColor].variants.findIndex(item => item.size === product.size)
+  const inventory = productAdding.properties[indexOfColor].variants[indexOfSize].quantity
+
   if (!isProductExistInCart) {
     await Cart.updateOne(
       {
@@ -74,6 +89,17 @@ export const addProductToCard = async (
       }
     );
   } else {
+    if(isProductExistInCart.quantity === inventory){
+      return res.status(400).json({
+        message: "Số lượng sản phẩm này trong giỏ hàng của bạn đã đạt mức tối đa!"
+      })
+    }
+    if(product.quantity + isProductExistInCart.quantity > inventory){
+      return res.status(400).json({
+        message: `Bạn chỉ thêm được ${inventory - isProductExistInCart.quantity} sản phẩm vào giỏ hàng!`
+      })
+    }
+    
     await Cart.updateOne(
       {
         user_id: user_id,
