@@ -257,7 +257,7 @@ export const createBill = async (req: Request, res: Response) => {
     const items = req.body.items;
     console.log("item", items);
 
-    for (const item of items) {
+    for (const item of items) { 
       const result = await product.findOne({ _id: item.product_id });
 
       if (!result) {
