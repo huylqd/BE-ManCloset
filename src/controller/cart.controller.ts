@@ -138,10 +138,21 @@ export const addProductToCard = async (
   });
 };
 
+type TProductInCart = {
+  _id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  color: string;
+  size: string;
+  imageUrl: string;
+  addedAt?: Date;
+  updatedAt?: Date;
+}
 export const deleteProductInCart = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = req.body;
+    const products:TProductInCart[] = req.body;
 
     const cart = await Cart.find({ user_id: id });
 
@@ -151,21 +162,23 @@ export const deleteProductInCart = async (req: Request, res: Response) => {
       });
     }
 
-    await Cart.updateOne(
-      {
-        user_id: id
-      },
-      {
-        $pull: {
-          products: {
-            _id: product._id,
-            color: product.color,
-            size: product.size,
+    products.forEach(async (product) => {
+      await Cart.updateOne(
+        {
+          user_id: id,
+        },
+        {
+          $pull: {
+            products: {
+              _id: product._id,
+              color: product.color,
+              size: product.size,
+            },
           },
         },
-      },
-      { new: true }
-    );
+        { new: true }
+      );
+    });
 
     const updateCart = await Cart.findOne({ user_id: id });
 
