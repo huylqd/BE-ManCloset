@@ -67,15 +67,20 @@ export const addProductToCard = async (
     _id: product._id,
   });
 
-  if(!product){
+  if (!product) {
     return res.status(404).json({
-      message: "Không tìm thấy sản phẩm"
-    })
+      message: "Không tìm thấy sản phẩm",
+    });
   }
 
-  const indexOfColor = productAdding.properties.findIndex(item => item.color === product.color)
-  const indexOfSize = productAdding.properties[indexOfColor].variants.findIndex(item => item.size === product.size)
-  const inventory = productAdding.properties[indexOfColor].variants[indexOfSize].quantity
+  const indexOfColor = productAdding.properties.findIndex(
+    (item) => item.color === product.color
+  );
+  const indexOfSize = productAdding.properties[indexOfColor].variants.findIndex(
+    (item) => item.size === product.size
+  );
+  const inventory =
+    productAdding.properties[indexOfColor].variants[indexOfSize].quantity;
 
   if (!isProductExistInCart) {
     await Cart.updateOne(
@@ -89,17 +94,20 @@ export const addProductToCard = async (
       }
     );
   } else {
-    if(isProductExistInCart.quantity === inventory){
+    if (isProductExistInCart.quantity === inventory) {
       return res.status(400).json({
-        message: "Số lượng sản phẩm này trong giỏ hàng của bạn đã đạt mức tối đa!"
-      })
+        message:
+          "Số lượng sản phẩm này trong giỏ hàng của bạn đã đạt mức tối đa!",
+      });
     }
-    if(product.quantity + isProductExistInCart.quantity > inventory){
+    if (product.quantity + isProductExistInCart.quantity > inventory) {
       return res.status(400).json({
-        message: `Bạn chỉ thêm được ${inventory - isProductExistInCart.quantity} sản phẩm vào giỏ hàng!`
-      })
+        message: `Bạn chỉ thêm được ${
+          inventory - isProductExistInCart.quantity
+        } sản phẩm vào giỏ hàng!`,
+      });
     }
-    
+
     await Cart.updateOne(
       {
         user_id: user_id,
@@ -130,10 +138,10 @@ export const addProductToCard = async (
   });
 };
 
-export const deleteProductInCart = async (req: any, res: Response) => {
+export const deleteProductInCart = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const products = req.body;
+    const product = req.body;
 
     const cart = await Cart.find({ user_id: id });
 
@@ -143,19 +151,27 @@ export const deleteProductInCart = async (req: any, res: Response) => {
       });
     }
 
-    const productIds = products.map((item) => item._id);
-
-    await Cart.updateMany(
-      { user_id: id },
-      { $pull: { products: { _id: { $in: productIds } } } }
+    await Cart.updateOne(
+      {
+        user_id: id
+      },
+      {
+        $pull: {
+          products: {
+            _id: product._id,
+            color: product.color,
+            size: product.size,
+          },
+        },
+      },
+      { new: true }
     );
 
-    const updateCart = await Cart.findOne({
-      user_id: id,
-    });
+    const updateCart = await Cart.findOne({ user_id: id });
+
     return res.status(200).json({
       message: "Xoá sản phẩm thành công",
-      data: updateCart.products,
+      result: updateCart.products,
     });
   } catch (error) {
     return res.status(400).json({
@@ -204,10 +220,14 @@ export const updateProductInCart = async (req: Request, res: Response) => {
 
     const cartUpdated = await Cart.findOne({ user_id: user_id });
     const productUpdated = cartUpdated.products.find((item) => {
-      if(item._id.toString() === id && item.color === color && item.size === size){
-        return true
+      if (
+        item._id.toString() === id &&
+        item.color === color &&
+        item.size === size
+      ) {
+        return true;
       }
-      return false
+      return false;
     });
 
     return res.status(200).json({

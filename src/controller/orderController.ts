@@ -295,24 +295,11 @@ export const createBill = async (req: Request, res: Response) => {
   }
 };
 
-//Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
+
 export const updateBill = async (req: Request, res: Response) => {
-  function stringToPaymentStatus(value: string): PaymentStatus | null {
-    if (Object.values(PaymentStatus).indexOf(value as PaymentStatus) >= 0) {
-      return value as PaymentStatus;
-    }
-    return null;
-  }
-
-  function stringToOrderStatus(value: string): OrderStatus | null {
-    if (Object.values(OrderStatus).indexOf(value as OrderStatus) >= 0) {
-      return value as OrderStatus;
-    }
-    return null;
-  }
-
   try {
     const { orderStatus, paymentStatus } = req.body;
+    const {id} = req.params
     const bill = await Bill.findById(req.params.id);
 
     if (!bill) {
@@ -321,36 +308,57 @@ export const updateBill = async (req: Request, res: Response) => {
       });
     }
 
-    if (orderStatus) {
-      bill.history_order_status.push({
-        status: stringToOrderStatus(orderStatus),
-        updatedAt: new Date(),
-      });
+    if(orderStatus) {
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $push: {
+          history_order_status: {
+            status: orderStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
 
-      bill.current_order_status = {
-        status: stringToOrderStatus(orderStatus),
-        updatedAt: new Date(),
-      };
-
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $set: {
+          current_order_status: {
+            status: orderStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
     }
 
     if (paymentStatus) {
-      bill.payment_status = {
-        status: stringToPaymentStatus(paymentStatus),
-        updatedAt: new Date(),
-      };
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $set: {
+          payment_status: {
+            status: paymentStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
     }
 
-    await bill.save();
-    if (bill.current_order_status.status === "Đã xác nhận") {
-      SendMailOrderSuccess(bill)
+    const updatedBill = await Bill.findById(id)
+
+    if (updatedBill.current_order_status.status === "Đã xác nhận") {
+      SendMailOrderSuccess(updatedBill)
     }
-    if (bill.current_order_status.status === "Đã giao") {
-      SendMailOrderSuccess(bill)
+    if (updatedBill.current_order_status.status === "Đã giao") {
+      SendMailOrderSuccess(updatedBill)
     }
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
-      data: bill,
+      data: updatedBill,
     });
   } catch (error) {
     return res.status(500).json({

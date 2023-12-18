@@ -5,10 +5,18 @@ export const orderSchema = Joi.object({
   total_price: Joi.number(),
   payment_method: Joi.string(),
   shipping_address: Joi.string(),
+  payment_status: Joi.object({
+    status: Joi.string(),
+    updatedAt: Joi.date(),
+  }),
+  current_order_status: Joi.object({
+    status: Joi.string(),
+    updatedAt: Joi.date(),
+  }),
   history_order_status: Joi.array().items(
     Joi.object({
       status: Joi.string(),
-      createAt: Joi.date(),
+      updatedAt: Joi.date(),
     })
   ),
   items: Joi.array().items(
