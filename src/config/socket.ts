@@ -17,5 +17,10 @@ export const SocketServer = (socket: Socket) => {
     }
   })
 
+  socket.on('updateOrderStatus', (data) => {
+    console.log('Received order status update:', data);
+    socket.broadcast.emit('orderStatusUpdated', data);
+  })
+
   
 }
