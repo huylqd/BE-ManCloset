@@ -72,7 +72,7 @@ const productSchema = new mongoose.Schema<IProduct>(
 plugins.forEach((plugin) => {
   productSchema.plugin(plugin, {
     deletedAt: true,
-    overrideMethods: true,
+    overrideMethods: "all",
   });
 });
 

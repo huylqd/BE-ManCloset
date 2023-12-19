@@ -4,6 +4,7 @@ import Auth from "../model/user"
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'
+import cart from '../model/cart';
 dotenv.config()
 const {CUSTOMER_ID,CUSTOMER_SECRET_CODE,ACCESSTOKEN_SECRET,REFESHTOKEN_SECRET} = process.env
 passport.use(new GoogleStrategy({
@@ -17,7 +18,7 @@ passport.use(new GoogleStrategy({
             googleId: profile.id,
             authType: "google"
         })
-        console.log(isExitUser);
+    
         
         if (isExitUser) {
             const token = jwt.sign({ _id: isExitUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
@@ -33,6 +34,12 @@ passport.use(new GoogleStrategy({
                     avatar:  profile.picture,                                      
                     password: "Không có mật khẩu",
                 });
+                console.log(newUser);
+                
+                 await cart.create({
+                    user_id: newUser._id,
+                    products: [],
+                  });
                
                 const token = jwt.sign({ _id: newUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
                 const refreshToken = jwt.sign({ _id: newUser._id },REFESHTOKEN_SECRET , { expiresIn: "4h" })
