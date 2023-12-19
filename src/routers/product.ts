@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+const multer = require('multer');
 import {
   createProduct,
   getProductById,
@@ -10,6 +11,7 @@ import {
   FilterProductByPrice,
   remove,
   getAllDeleted,
+  ImportProductByExcel,
   
 } from "../controller/productController";
 import { uploadImage } from "../config/cloudinary";
@@ -28,5 +30,9 @@ router.delete("/products/:id",(req, res, next) => { checkPermission(req, res, ne
 router.patch("/products/remove/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, remove);
 router.get("/products/size/filter",FilterProductBySize)
 router.get("/products/price/filter",FilterProductByPrice)
-
+//import
+// Cấu hình Multer để xử lý tệp tải lên
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+router.post('/upload', upload.single('file'), ImportProductByExcel);
 export default router;

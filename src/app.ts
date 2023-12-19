@@ -1,5 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
+const multer = require('multer');
+const ExcelJS = require('exceljs');
 import cors from "cors";
 import categoryRouter from "./routers/category";
 import couponRouter from "./routers/coupon";
@@ -20,6 +22,7 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import socket, { Server, Socket }  from "socket.io";
 import http from "http";
+import product from "./model/product";
 //Config express
 const app: any = express();
 dotenv.config();
@@ -56,6 +59,60 @@ app.use("/api", routerPassport);
 app.use("/", UserRouter);
 app.use("/", AnalystRouter);
 app.use("/api/message", messageRouter )
+// Cấu hình Multer để xử lý tệp tải lên
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    // Đọc dữ liệu từ tệp Excel và thêm vào MongoDB
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+
+    const productData = {};
+
+    workbook.eachSheet((worksheet, sheetId) => {
+      worksheet.getRow(1).eachCell({ includeEmpty: true }, cell => cell.value = cell.text);
+      worksheet.eachRow({min:2,max:worksheet.actualRowCount},(row, rowNumber) => {
+        const productId = row.getCell('A').value;
+        if (!productData[productId]) {
+          productData[productId] = {
+            productName: row.getCell('A').value,
+            price: row.getCell('B').value,
+            description: row.getCell('C').value,
+            categoryId: row.getCell('D').value,
+            discount: row.getCell('E').value,
+            properties: [],
+          };
+        }
+
+        const property = {
+          imageUrl: row.getCell('F').text,
+          color: row.getCell('G').value,
+          variants: [
+            {
+              size: row.getCell('H').value,
+              quantity: row.getCell('I').value,
+            },
+          ],
+        };
+
+        productData[productId].properties.push(property);
+      });
+    });
+
+    // Chuyển đổi dữ liệu từ object sang array
+    const productsArray = Object.values(productData);
+
+    // Thêm dữ liệu vào MongoDB
+    await product.insertMany(productsArray);
+
+    res.status(200).json({ message: 'Import completed' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 isCheckedSale();
 //Connect DB
 

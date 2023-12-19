@@ -4,6 +4,8 @@ import Category from "../model/category";
 import Product from "../model/product";
 import { productSchema } from "../schema/productSchema";
 import cloudinary from "../config/cloudinary";
+import product from "../model/product";
+const ExcelJS = require('exceljs');
 export const getAllProduct = async (req: any, res: any) => {
   const {
     _page = 1,
@@ -421,4 +423,53 @@ export const FilterProductByDiscount = async (req: Request, res: Response) => {
   }
 };
   
+export const ImportProductByExcel = async (req:any,res:Response) => {
+  try {
+    // Đọc dữ liệu từ tệp Excel và thêm vào MongoDB
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
 
+    const productData = {};
+
+    workbook.eachSheet((worksheet, sheetId) => {
+      worksheet.getRow(1).eachCell({ includeEmpty: true }, cell => cell.value = cell.text);
+      worksheet.eachRow({min:2,max:worksheet.actualRowCount},(row, rowNumber) => {
+        const productId = row.getCell('A').value;
+        if (!productData[productId]) {
+          productData[productId] = {
+            productName: row.getCell('A').value,
+            price: row.getCell('B').value,
+            description: row.getCell('C').value,
+            categoryId: row.getCell('D').value,
+            discount: row.getCell('E').value,
+            properties: [],
+          };
+        }
+
+        const property = {
+          imageUrl: row.getCell('F').text,
+          color: row.getCell('G').value,
+          variants: [
+            {
+              size: row.getCell('H').value,
+              quantity: row.getCell('I').value,
+            },
+          ],
+        };
+
+        productData[productId].properties.push(property);
+      });
+    });
+
+    // Chuyển đổi dữ liệu từ object sang array
+    const productsArray = Object.values(productData);
+
+    // Thêm dữ liệu vào MongoDB
+    await product.insertMany(productsArray);
+
+    res.status(200).json({ message: 'Import completed' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
