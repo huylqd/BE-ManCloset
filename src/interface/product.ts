@@ -3,8 +3,10 @@ import mongoose, { Document } from "mongoose";
 type property = {
   imageUrl: string;
   color: string;
-  quantity: number;
-  size: string;
+  variants: {
+    quantity: number;
+    size: string;
+  }[];
 };
 export interface IProduct extends Document {
   productName: string;
@@ -13,7 +15,7 @@ export interface IProduct extends Document {
   properties: property[];
   categoryId: mongoose.Types.ObjectId;
   discount: number;
-  views:number;
+  views: number;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;

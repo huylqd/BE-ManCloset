@@ -9,9 +9,10 @@ import { UpdateUserReqBody } from "../model/requests/user.requrest";
 import { Request, Response } from "express";
 import HTTP_STATUS from "../constants/httpStatus";
 import cloudinary from "../config/cloudinary";
-import { sendMail } from "../utils/sendMail";
+
 import { checkInteger } from "../utils/checkNumber";
 import { dataQueryPaginate } from "../utils/dataQuery";
+import { sendMailClose, sendMailOpen } from "../utils/sendMail";
 dotenv.config()
 
 export const signUp = async (req, res) => {
@@ -420,12 +421,19 @@ export const lockUser = async (req, res) => {
         message: "User not found",
       });
     }
-    sendMail(user.name, user.email)
-
+    if (user.isBlocked) {
+      sendMailOpen(user.name, user.email)
+      return res.status(200).json({
+        message: "Khóa người dùng thành công",
+        data: user
+      })
+    }
+    sendMailClose(user.name, user.email)
     return res.status(200).json({
-      message: "Khóa người dùng thành công",
+      message: "Mở khóa người dùng thành công",
       data: user
     })
+
 
   } catch (error) {
     return res.status(500).json({

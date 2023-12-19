@@ -12,6 +12,8 @@ import {
   restoreProduct,
   removeForce,
   getProductDeletedById,
+ 
+  getInventoryOfProduct,
   
 } from "../controller/productController";
 import { uploadImage } from "../config/cloudinary";
@@ -41,5 +43,7 @@ router.get("/products/moveToTrash/delete/:id",(req, res, next) => { checkPermiss
 // Filter
 router.get("/products/size/filter",FilterProductBySize)
 router.get("/products/price/filter",FilterProductByPrice)
+
+router.get("/products/:id/inventory", getInventoryOfProduct)
 
 export default router;

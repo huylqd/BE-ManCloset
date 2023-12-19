@@ -23,6 +23,8 @@ import {
 import { SortOrder } from "mongoose";
 import { checkInteger } from "../utils/checkNumber";
 import { dataQuery } from "../utils/dataQuery";
+import { sendMailOrder } from "../utils/sendMail";
+import { SendMailOrderSuccess } from "../service/sendMailService";
 
 export const getAllBill = async (req: Request, res: Response) => {
   const {
@@ -99,7 +101,7 @@ export const getBills = async (req: Request, res: Response) => {
       .skip(+options.page * +options.limit)
       .limit(+options.limit)
 
-      const results = dataQuery(totalBill, +options.limit, +options.page);
+    const results = dataQuery(totalBill, +options.limit, +options.page);
 
     if (bills.length === 0) {
       return res.status(200).json({
@@ -255,7 +257,7 @@ export const createBill = async (req: Request, res: Response) => {
     const items = req.body.items;
     console.log("item", items);
 
-    for (const item of items) {
+    for (const item of items) { 
       const result = await product.findOne({ _id: item.product_id });
 
       if (!result) {
@@ -293,24 +295,11 @@ export const createBill = async (req: Request, res: Response) => {
   }
 };
 
-//Chỉ gửi lên status mới ghi thế đã đợi nghĩ và phát triển thêm
+
 export const updateBill = async (req: Request, res: Response) => {
-  function stringToPaymentStatus(value: string): PaymentStatus | null {
-    if (Object.values(PaymentStatus).indexOf(value as PaymentStatus) >= 0) {
-      return value as PaymentStatus;
-    }
-    return null;
-  }
-
-  function stringToOrderStatus(value: string): OrderStatus | null {
-    if (Object.values(OrderStatus).indexOf(value as OrderStatus) >= 0) {
-      return value as OrderStatus;
-    }
-    return null;
-  }
-
   try {
     const { orderStatus, paymentStatus } = req.body;
+    const {id} = req.params
     const bill = await Bill.findById(req.params.id);
 
     if (!bill) {
@@ -319,30 +308,57 @@ export const updateBill = async (req: Request, res: Response) => {
       });
     }
 
-    if (orderStatus) {
-      bill.history_order_status.push({
-        status: stringToOrderStatus(orderStatus),
-        updatedAt: new Date(),
-      });
+    if(orderStatus) {
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $push: {
+          history_order_status: {
+            status: orderStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
 
-      bill.current_order_status = {
-        status: stringToOrderStatus(orderStatus),
-        updatedAt: new Date(),
-      };
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $set: {
+          current_order_status: {
+            status: orderStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
     }
 
     if (paymentStatus) {
-      bill.payment_status = {
-        status: stringToPaymentStatus(paymentStatus),
-        updatedAt: new Date(),
-      };
+      await Bill.updateOne({
+        _id: id,
+      },
+      {
+        $set: {
+          payment_status: {
+            status: paymentStatus,
+            updatedAt: new Date()
+          }
+        }
+      })
     }
 
-    await bill.save();
+    const updatedBill = await Bill.findById(id)
 
+    if (updatedBill.current_order_status.status === "Đã xác nhận") {
+      SendMailOrderSuccess(updatedBill)
+    }
+    if (updatedBill.current_order_status.status === "Đã giao") {
+      SendMailOrderSuccess(updatedBill)
+    }
     return res.status(200).json({
       message: "Phiếu đặt hàng đã được cập nhật thành công",
-      data: bill,
+      data: updatedBill,
     });
   } catch (error) {
     return res.status(500).json({

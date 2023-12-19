@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Comment from "../model/comment";
 import { commentSchema } from "../schema/commentSchema";
+import { checkUserInOrder } from "../service/orderService";
 
 export const getAllCommentByProductId = async (req: Request, res: Response) => {
   try {
@@ -49,10 +50,16 @@ export const createComment = async (req: any, res: Response) => {
   try {
     const user = req.user;
     if (!user) {
-      return res.status(500).json({
+      return res.status(401).json({
         message: "Vui lòng đăng nhập để comment"
       })
     }
+   const result = await checkUserInOrder(user._id);
+   if(result.status === -1){
+     return res.status(200).json({
+       message:"Bạn phải mua hàng để được comment",
+     })
+   }
     const { error } = commentSchema.validate(req.body);
     if (error) {
       const errors = error.details.map((message) => ({ message }));

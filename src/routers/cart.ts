@@ -4,6 +4,7 @@ import {
   addProductToCard,
   deleteProductInCart,
   getAllProductInCart,
+  updateProductInCart,
 } from "../controller/cart.controller";
 import { checkPermission } from "../middleware/checkPermission";
 
@@ -17,5 +18,7 @@ router.patch("/cart/add-to-cart", (req, res, next) => {checkPermission(req, res,
 
 // delete product
 router.put("/cart/:id", deleteProductInCart)
+// update product in cart
+router.patch("/cart/:user_id/product/:id", updateProductInCart)
 
 export default router;
