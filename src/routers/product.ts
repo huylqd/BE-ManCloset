@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+const multer = require('multer');
 import {
   createProduct,
   getProductById,
@@ -12,8 +13,8 @@ import {
   restoreProduct,
   removeForce,
   getProductDeletedById,
- 
   getInventoryOfProduct,
+  ImportProductByExcel,
   
 } from "../controller/productController";
 import { uploadImage } from "../config/cloudinary";
@@ -46,4 +47,9 @@ router.get("/products/price/filter",FilterProductByPrice)
 
 router.get("/products/:id/inventory", getInventoryOfProduct)
 
+//import
+// Cấu hình Multer để xử lý tệp tải lên
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+router.post('/upload', upload.single('file'), ImportProductByExcel);
 export default router;
