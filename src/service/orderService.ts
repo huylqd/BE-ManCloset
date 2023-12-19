@@ -1,6 +1,7 @@
 import order from "../model/order";
 import product from "../model/product";
 import { sendMailPaid } from "../utils/sendMail";
+import { DeleteProductInCart } from "./cartService";
 import { SendMailOrderPaid } from "./sendMailService";
 
 // Kiểm tra xem có tài liệu nào có order_id cụ thể không
@@ -22,6 +23,8 @@ export const checkOrderSuccessVnPay = async (transactionId) => {
       { new: true }
     );
     const items = result.items;
+    const user_id = result.user_id;
+    let items_id = [];
     for (const item of items) {
       const result = await product.findOne({ _id: item.product_id });
 
@@ -45,10 +48,11 @@ export const checkOrderSuccessVnPay = async (transactionId) => {
         }
       } else {
         selectedVariant.quantity -= item.property.quantity;
+        items_id.push(result._id)
         await result.save();
       }
     }
-    console.log("vnpay",);
+    await DeleteProductInCart(user_id,items_id);
     SendMailOrderPaid(result)
     if (result) {
       return { message: "Tài liệu tồn tại" };

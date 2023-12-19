@@ -24,7 +24,26 @@ export const getAllCommentByProductId = async (req: Request, res: Response) => {
     });
   }
 };
+export const deleteCommentById = async (req: Request, res: Response) => {
+  try {
+    const { cmt_id } = req.params;
+    const comment = await Comment.findByIdAndDelete({ _id: cmt_id });
+    if (!comment) {
+      return res.status(404).json({
+        message: "Comment not found"
+      })
+    }
+    return res.status(200).json({
+      message: "Comment deleted successfully",
+      data: comment
 
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+    });
+  }
+}
 export const getAllComment = async (req: Request, res: Response) => {
   try {
     const comment = await Comment.find().sort({
@@ -54,12 +73,12 @@ export const createComment = async (req: any, res: Response) => {
         message: "Vui lòng đăng nhập để comment"
       })
     }
-   const result = await checkUserInOrder(user._id);
-   if(result.status === -1){
-     return res.status(200).json({
-       message:"Bạn phải mua hàng để được comment",
-     })
-   }
+    const result = await checkUserInOrder(user._id);
+    if (result.status === -1) {
+      return res.status(200).json({
+        message: "Bạn phải mua hàng để được comment",
+      })
+    }
     const { error } = commentSchema.validate(req.body);
     if (error) {
       const errors = error.details.map((message) => ({ message }));
