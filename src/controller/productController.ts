@@ -593,9 +593,9 @@ export const ImportProductByExcel = async (req:any,res:Response) => {
     const productsArray = Object.values(productData);
 
     // Thêm dữ liệu vào MongoDB
-    await product.insertMany(productsArray);
+   const importProduct = await product.insertMany(productsArray);
 
-    res.status(200).json({ message: 'Import completed' });
+    res.status(200).json({ message: 'Import completed' ,data:importProduct});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
