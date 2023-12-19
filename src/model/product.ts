@@ -4,7 +4,10 @@ import mongooseDelete from "mongoose-delete";
 import { IProduct } from "../interface/product";
 
 const plugins = [paginate, mongooseDelete];
-
+const variantSchema = new mongoose.Schema({
+    size: { type: String },
+    quantity: { type: Number },
+},{_id:false})
 const propertySchema = new mongoose.Schema({
   imageUrl: {
     type: String,
@@ -12,13 +15,8 @@ const propertySchema = new mongoose.Schema({
   color: {
     type: String,
   },
-  variants: [
-    {
-      size: { type: String },
-      quantity: { type: Number },
-    },
-  ],
-});
+  variants: [variantSchema],
+},{_id:false});
 
 const productSchema = new mongoose.Schema<IProduct>(
   {
