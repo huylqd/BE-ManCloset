@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { IUser } from "../interface/user";
 import mongoosePaginate from "mongoose-paginate-v2";
+import mongooseDelete from "mongoose-delete";
 const addressSchema = new mongoose.Schema(
   {
     city: {
@@ -95,6 +96,7 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   { timestamps: true, versionKey: false }
 );
 userSchema.plugin(mongoosePaginate)
+userSchema.plugin(mongooseDelete, { overrideMethods: 'all', deletedAt : true  });
 const User = mongoose.model<IUser, mongoose.PaginateModel<IUser>>(
   "Users",
   userSchema

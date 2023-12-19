@@ -4,6 +4,8 @@ import Category from "../model/category";
 import Product from "../model/product";
 import { productSchema } from "../schema/productSchema";
 import cloudinary from "../config/cloudinary";
+import { checkInteger } from "../utils/checkNumber";
+import { dataQuery, dataQueryPaginate } from "../utils/dataQuery";
 export const getAllProduct = async (req: any, res: any) => {
   const {
     _page = 1,
@@ -36,10 +38,20 @@ export const getAllProduct = async (req: any, res: any) => {
 };
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({_id:req.params.id});
     if (!product) throw new Error("Product not found");
     product.views++;
     await product.save();
+    return res.status(200).json({ data: product });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+export const getProductDeletedById = async (req: Request, res: Response) => {
+  try {
+    const product = await (Product as any).findWithDeleted({_id:req.params.id});
+    if (!product) throw new Error("Product not found");
+    
     return res.status(200).json({ data: product });
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -53,11 +65,18 @@ export const createProduct = async (req: any, res: Response) => {
       const errors = error.details.map((message) => ({ message }));
       return res.status(400).json({ errors });
     }
+    const { productName } = req.body;
+    const productExists = await Category.findOne({ productName });
+    if (productExists) {
+      return res.status(404).json({
+        message: "Sản phẩm đã tồn tại",
+      });
+    }
 
     const fileImages = req.files;
     if (!fileImages || fileImages.length === 0) {
       return res.status(400).json({
-        error: "Vui lòng tải lên ít nhất một hình ảnh sản phẩm",
+        message: "Vui lòng tải lên ít nhất một hình ảnh sản phẩm",
       });
     }
     const imagePaths = fileImages.map((file) => file.path);
@@ -95,61 +114,108 @@ export const updateProduct = async (req: any, res: Response) => {
         messages: error.details.map((message) => ({ message })),
       });
     }
-
-    const fileImages = req.files;
-    if (!fileImages || fileImages.length === 0) {
-      return res.status(400).json({
-        error: "Vui lòng tải lên ít nhất một hình ảnh sản phẩm",
-      });
-    }
-    const imagePaths = fileImages.map((file) => file.path);
-    const updatedProperties = req.body.properties.map((property, index) => ({
-      ...property,
-      imageUrl: imagePaths[index],
-    }));
-    // Tìm sản phẩm theo id và cập nhật dữ liệu mới
     const productId = req.params.id;
+   
+    
+    
+
+    // Tìm sản phẩm theo id và cập nhật dữ liệu mới
+    
     const product = await Product.findById(productId);
+   
+      const fileImages = req.files;
+    
+      if(fileImages.length !== 0){
+        const imagePaths = fileImages.map((file) => file.path);
+        const updatedProperties = req.body.properties.map((property, index) => ({
+          ...property,
+          imageUrl: imagePaths[index],
+        }));
+        const oldImagePath = product.properties?.map((property) => {
+          return property.imageUrl;
+        });
+        if(oldImagePath.includes(undefined)){
+        
+        }else{
+          const publicId = oldImagePath[0].split("/").slice(-2).join("/").split(".")[0]; // Lấy public_id từ đường dẫn
+    
+          await cloudinary.uploader.destroy(publicId);
+        }
+    
+       
+        const updatedProduct = await Product.findOneAndUpdate(
+          { _id: productId },
+          {
+            ...req.body,
+            properties: updatedProperties,
+          },
+    
+          { new: true }
+        );
+        if (!updatedProduct) {
+          return res.sendStatus(404);
+        }
+    
+        // Xóa sản phẩm cũ khỏi danh sách products của category cũ
+        const oldCategoryId = updatedProduct.categoryId;
+        await Category.findByIdAndUpdate(oldCategoryId, {
+          $pull: { products: productId },
+        });
+    
+        // Thêm sản phẩm mới vào danh sách products của category mới
+        const newCategoryId = req.body.categoryId;
+        if (newCategoryId) {
+          // Thêm sản phẩm mới vào danh sách products của category mới
+          await Category.findByIdAndUpdate(newCategoryId, {
+            $addToSet: { products: productId },
+          });
+        }
+        return res.status(200).json({
+          message: "Cập nhật sản phẩm thành công",
+          data:updatedProduct
+        });
+      }else{
+        console.log(req.body);
+        // const {properties} = req.body;
+        // if(properties){
 
-    const oldImagePath = product.properties?.map((property) => {
-      return property.imageUrl;
-    });
-
-    const publicId = oldImagePath[0]
-      .split("/")
-      .slice(-2)
-      .join("/")
-      .split(".")[0]; // Lấy public_id từ đường dẫn
-
-    await cloudinary.uploader.destroy(publicId);
-    const updatedProduct = await Product.findOneAndUpdate(
-      { _id: productId },
-      {
-        ...req.body,
-        properties: updatedProperties,
-      },
-
-      { new: true }
-    );
-    if (!updatedProduct) {
-      return res.sendStatus(404);
-    }
-
-    // Xóa sản phẩm cũ khỏi danh sách products của category cũ
-    const oldCategoryId = updatedProduct.categoryId;
-    await Category.findByIdAndUpdate(oldCategoryId, {
-      $pull: { products: productId },
-    });
-
-    // Thêm sản phẩm mới vào danh sách products của category mới
-    const newCategoryId = req.body.categoryId;
-    if (newCategoryId) {
-      // Thêm sản phẩm mới vào danh sách products của category mới
-      await Category.findByIdAndUpdate(newCategoryId, {
-        $addToSet: { products: productId },
-      });
-    }
-    return res.status(200).json(updatedProduct);
+        // }
+        const updatedProperties = req.body.properties.map((property, index) => ({
+          ...property,
+          imageUrl: product.properties[0].imageUrl,
+        }));
+        const updatedProduct = await Product.findByIdAndUpdate(
+          { _id: productId },
+          {
+            ...req.body,
+            properties: updatedProperties,
+          },
+          { new: true }
+        );
+        const oldCategoryId = updatedProduct.categoryId;
+        await Category.findByIdAndUpdate(oldCategoryId, {
+          $pull: { products: productId },
+        });
+    
+        // Thêm sản phẩm mới vào danh sách products của category mới
+        const newCategoryId = req.body.categoryId;
+        if (newCategoryId) {
+          // Thêm sản phẩm mới vào danh sách products của category mới
+          await Category.findByIdAndUpdate(newCategoryId, {
+            $addToSet: { products: productId },
+          });
+        }
+        return res.status(200).json({
+          message:"Cập nhật thành công 1",
+          data: updatedProduct
+        });
+      }
+     
+    
+  
+     
+    
+    
   } catch (error) {
     return res.status(500).json({
       message: "Cập nhật sản phẩm không thành công",
@@ -157,39 +223,35 @@ export const updateProduct = async (req: any, res: Response) => {
     });
   }
 };
-export const removeProduct = async (req: Request, res: Response) => {
+export const removeForce = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const product = await Product.findById(id);
-
-    if (!product) {
-      return res.status(404).json({
-        message: "Không tìm thấy sản phẩm",
-      });
-    }
+    const product = await (Product as any).findWithDeleted({_id:id});
+    
     // Duyệt qua mảng property và xóa từng ảnh từ Cloudinary
-    if (product.properties && product.properties.length > 0) {
-      for (const property of product.properties) {
+    if (product[0]?.properties && product[0]?.properties.length > 0) {
+      for (const property of product[0]?.properties) {
         if (property.imageUrl) {
           const publicId = property.imageUrl
             .split("/")
             .slice(-2)
             .join("/")
             .split(".")[0]; // Lấy public_id từ URL
+            console.log(publicId);
           await cloudinary.uploader.destroy(publicId);
         }
       }
     }
 
-    await Product.findByIdAndDelete(id);
+   const removeProduct =  await Product.deleteOne({_id:id});
     // Xóa sản phẩm cũ khỏi danh sách products của category cũ
-    await Category.findByIdAndUpdate(product.categoryId, {
-      $pull: { products: product._id },
+    await Category.findOneAndUpdate(product[0].categoryId, {
+      $pull: { products: product[0]._id },
     });
 
     return res.status(200).json({
       message: "Xóa sản phẩm thành công",
-      data: product,
+      data: removeProduct,
     });
   } catch (error) {
     res.status(500).json({
@@ -200,48 +262,70 @@ export const removeProduct = async (req: Request, res: Response) => {
 };
 export const remove = async (req, res) => {
   try {
-    const id = req.params.id;
-    const updateDeleted = {
-      deleted: true,
-      deletedAt: new Date(),
-    };
-    const product = await Product.findByIdAndUpdate(
-      { _id: id },
-      updateDeleted,
-      { new: true }
-    );
-    if (!product) {
-      return res.status(400).json({
-        message: "Lỗi khi xóa sản phảm",
-      });
-    }
-    return res.status(200).json({
-      message: "Xoá sản phẩm thành công chuyển sang thùng rác",
-      data: product,
-    });
+      const id = req.params.id;
+      const product = await Product.findById(id);
+     
+      if (product) {
+          await (product as any).delete()
+      }
+      return res.status(200).json({
+          message: "Xoá sản phẩm thành công chuyển sang thùng rác",
+          data:product
+      })
   } catch (error) {
-    return res.status(500).json({
-      message: error,
-    });
+      return res.status(400).json({
+          message: error,
+      })
+  }
+};
+export const restoreProduct = async (req, res) => {
+  try {
+      const restoredProduct = await (Product as any).restore({ _id: req.params.id }, { new: true });
+      if (!restoredProduct) {
+          return res.status(400).json({
+              message: "Sản phẩm không tồn tại hoặc đã được khôi phục trước đó.",
+          });
+      }
+
+      return res.status(200).json({
+          message: "Khôi phục sản phẩm thành công.",
+          data: restoredProduct,
+      });
+  } catch (error) {
+      return res.status(400).json({
+          message: error.message,
+      });
   }
 };
 
-export const getAllDeleted = async (req: Request, res: Response) => {
+export const getAllDelete = async (req, res) => {
+  const query = req.query;
+  const options = {
+    page: checkInteger(+query?.page) ? +query.page - 1 : 0,
+    limit: checkInteger(+query?.limit) ? +query.limit : 10,
+    sort: query.sort || "createdAt",
+    order: query.order || "desc",
+  };
   try {
-    const product = await Product.find({ deleted: false });
-    if (!product) {
-      return res.status(400).json({
-        message: "Không có sản phẩm nào bị xóa",
+    // const totalProducts = await (Product as any).countDocuments({ deleted: true });
+    const totalProducts = await (Product as any).findWithDeleted({ deleted: true })
+    // Kiểm tra nếu trang hiện tại vượt quá tổng số trang, đặt lại trang cuối cùng
+    const totalPages = Math.ceil(totalProducts.length / options.limit);
+      const product = await (Product as any).findWithDeleted({ deleted: true }).sort({
+        [options.sort as string]: options.order as string,
+      }).skip((options.page) * options.limit  ).limit(options.limit as number);
+      const result = dataQueryPaginate(totalProducts,product,+options.limit, +options.page,totalPages)
+
+      
+      return res.status(200).json({
+          message: "Lấy tất cả sản phẩm trong thùng rác",
+          data:result,
+       
       });
-    }
-    return res.status(200).json({
-      message: "Lấy tất cả sản phẩm đã bị xóa",
-      product,
-    });
   } catch (error) {
-    return res.status(500).json({
-      message: error,
-    });
+      return res.status(500).json({
+          message: error,
+      })
   }
 };
 

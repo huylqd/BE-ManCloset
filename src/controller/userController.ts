@@ -9,6 +9,9 @@ import { UpdateUserReqBody } from "../model/requests/user.requrest";
 import { Request, Response } from "express";
 import HTTP_STATUS from "../constants/httpStatus";
 import cloudinary from "../config/cloudinary";
+
+import { checkInteger } from "../utils/checkNumber";
+import { dataQueryPaginate } from "../utils/dataQuery";
 import { sendMailClose, sendMailOpen } from "../utils/sendMail";
 dotenv.config()
 
@@ -574,3 +577,74 @@ export const updateAvatar = async (req, res) => {
     })
   }
 }
+
+// Chuyển người dùng vào trong thùng rác
+export const removeUserToTrash = async (req,res) => {
+  try {
+     const id = req.params.id
+    const user = await User.findById(id)
+  
+    if(!user) {
+      return res.status(400).json({
+        message: "Không tìm thấy người dùng",
+    })
+    }
+    if (user) {
+      await (user as any).delete()
+  }
+    return res.status(200).json({
+      message: "Chuyển người dùng vào ",
+      data:user
+  })
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+export const getAllDeletedUser = async (req,res) => {
+  try {
+    const query = req.query;
+    const options = {
+      page: checkInteger(+query?.page) ? +query.page - 1 : 0,
+      limit: checkInteger(+query?.limit) ? +query.limit : 10,
+      sort: query.sort || "createdAt",
+      order: query.order || "desc",
+    };
+    const totalUser = await (User as any).findWithDeleted({ deleted: true });
+    const totalPages = Math.ceil(totalUser.length / options.limit);
+    const user = await (User as any).findWithDeleted({ deleted:true}).sort({
+      [options.sort as string]: options.order as string,
+    }).skip((options.page) * options.limit  ).limit(options.limit as number);
+    const result = dataQueryPaginate(totalUser,user,+options.limit, +options.page,totalPages)
+    return res.status(200).json({
+      message: "Tất cả người dùng",
+      data:result,  
+  });
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+export const restoreUser = async (req,res) => {
+  try {
+    const restoredUser = await (User as any).restore({ _id: req.params.id }, { new: true });
+      if (!restoredUser) {
+          return res.status(400).json({
+              message: "Danh mục không tồn tại hoặc đã được khôi phục trước đó.",
+          });
+      }
+
+      return res.status(200).json({
+          message: "Khôi phục danh mục thành công.",
+          data: restoredUser,
+      });
+  } catch (error) {
+    return res.status(500).json({
+      message: error
+    })
+  }
+}
+
+// Lấy tất cả người dùng trong thùng rác
