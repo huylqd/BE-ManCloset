@@ -411,9 +411,14 @@ export const lockUser = async (req, res) => {
         message: "User not found",
       });
     }
+    if(lockByUser.role === "admin"){
+      res.status(400).json({
+        message: "Không thể khóa tài khoản admin",
+      });
+    }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
+    const user = await User.findOneAndUpdate(
+      {_id:userId},
       { isBlocked: lockByUser.isBlocked ? false : true },
       { new: true }
     )
