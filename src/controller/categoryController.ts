@@ -166,11 +166,11 @@ export const updateCategory = async (req: any, res: any) => {
 };
 export const removeCategory = async (req: any, res: any) => {
   try {
-
+    res.setHeader("Content-Type", "application/json");
     const { id } = req.params;
     const productsToUpdate = await Product.find({ categoryId: id })
     const newCategoryId = '65781e8b3d0129ac4e8355bd';
-    let newCategory = await Category.findById(newCategoryId);
+    let newCategory:any = await Category.findById(newCategoryId);
     await Promise.all(productsToUpdate.map(async (product: any) => {
       newCategory.products.push(product._id)
     }));
