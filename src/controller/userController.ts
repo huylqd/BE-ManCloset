@@ -444,6 +444,7 @@ export const lockUser = async (req, res) => {
 }
 
 export const getWishListByUser = async (req, res) => {
+  
   try {
     const id = req.params.userId;
     const user = await User.findById(id);
@@ -472,8 +473,7 @@ export const addRemoveWishLish = async (req, res) => {
       })
     }
     const itemToAdd = req.body;
-    console.log(itemToAdd);
-    console.log(user);
+    
     const { _id } = req.body;
     if (_id) {
       user.wishList = user.wishList.filter(item => item._id.toString() !== _id.toString());
@@ -485,6 +485,8 @@ export const addRemoveWishLish = async (req, res) => {
       })
     } else {
       const existingItem = user.wishList.find(item => item.name === itemToAdd.name);
+      console.log(existingItem);
+      
       if (existingItem) {
         res.status(404).json({
           message: 'Đã tồn tại trong danh sách yêu thích'
