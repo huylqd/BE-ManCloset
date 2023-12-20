@@ -1,20 +1,20 @@
 import express from "express";
-import { wrapRequestHandler } from "../utils/handlers";
+import { wrapRequestHandler } from "../utils/handlers.js";
 import {
   addProductToCard,
   deleteProductInCart,
   getAllProductInCart,
   updateProductInCart,
-} from "../controller/cart.controller";
-import { checkPermission } from "../middleware/checkPermission";
+} from "../controller/cart.controller.js";
+import { checkPermission } from "../middleware/checkPermission.js";
 
 const router = express.Router();
 
 // get all product cart
-router.get("/cart",(req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(getAllProductInCart));
+router.get("/cart", (req, res, next) => { checkPermission(req, res, next, 'member') }, wrapRequestHandler(getAllProductInCart));
 
 // add to cart
-router.patch("/cart/add-to-cart", (req, res, next) => {checkPermission(req, res, next, 'member')} ,wrapRequestHandler(addProductToCard));
+router.patch("/cart/add-to-cart", (req, res, next) => { checkPermission(req, res, next, 'member') }, wrapRequestHandler(addProductToCard));
 
 // delete product
 router.put("/cart/:id", deleteProductInCart)

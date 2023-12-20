@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Sale from "../model/sale";
+import Sale from "../model/sale.js";
 import * as cron from "node-cron";
-import Product from "../model/product";
+import Product from "../model/product.js";
 export const createSale = async (req: Request, res: Response) => {
   try {
     const {

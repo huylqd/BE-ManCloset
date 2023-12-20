@@ -1,13 +1,13 @@
-import { ICate } from "../interface/category";
-import Category from "../model/category";
-import Product from "../model/product";
-import { categorySchema } from "../schema/categorySchema";
+import { ICate } from "../interface/category.js";
+import Category from "../model/category.js";
+import Product from "../model/product.js";
+import { categorySchema } from "../schema/categorySchema.js";
 import unidecode from 'unidecode';
-import { checkInteger } from "../utils/checkNumber";
-import { dataQuery, dataQueryPaginate } from "../utils/dataQuery";
+import { checkInteger } from "../utils/checkNumber.js";
+import { dataQuery, dataQueryPaginate } from "../utils/dataQuery.js";
 export const createCategory = async (req: any, res: any) => {
   try {
-   
+
     const { error } = categorySchema.validate(req.body);
     if (error) {
       console.log("error", error);
@@ -22,15 +22,15 @@ export const createCategory = async (req: any, res: any) => {
         message: "Danh mục đã tồn tại",
       });
     }
-    const categoryExistsDelete = await (Category as any).findWithDeleted({ deleted: true,name: name});
+    const categoryExistsDelete = await (Category as any).findWithDeleted({ deleted: true, name: name });
     console.log(categoryExistsDelete);
 
-    if(categoryExistsDelete.length !== 0){
+    if (categoryExistsDelete.length !== 0) {
       return res.status(404).json({
         message: "Danh mục đã tồn tại trong thùng rác vui lòng vào thùng rác để khôi phục lại",
       });
     }
-    
+
     const category = await Category.create(req.body);
     if (category) {
       return res.status(201).json({
@@ -72,20 +72,20 @@ export const getAllCategory = async (req: any, res: any) => {
     //     item.name.toLowerCase().includes( _keywords)
     //   );
     // };
-// console.log(searchQuery);
+    // console.log(searchQuery);
     const result = await Category.paginate({}, options);
     if (result.docs.length === 0) {
       res.status(404).json({
         message: "Category not found",
       });
-    }else{
+    } else {
       // const searchDataCategory = await searchData(result);
-  //   const getAllCategory = await (await Category.find()).filter((cate:ICate) => !cate.deleted)
-  //   console.log(getAllCategory);
+      //   const getAllCategory = await (await Category.find()).filter((cate:ICate) => !cate.deleted)
+      //   console.log(getAllCategory);
 
-  //  const totalPage = Math.ceil(getAllCategory.length / result.limit);
-      
-      
+      //  const totalPage = Math.ceil(getAllCategory.length / result.limit);
+
+
       // const categoryResponse =  await { ...result, docs: searchDataCategory };
       //  console.log(categoryResponse.docs);
       res.status(200).json({
@@ -93,13 +93,13 @@ export const getAllCategory = async (req: any, res: any) => {
         data: result.docs,
         paginate: {
           currentPage: result.page,
-          totalPages:result.totalPages,
-          totalItems:result.totalDocs,
-          limit:result.limit
+          totalPages: result.totalPages,
+          totalItems: result.totalDocs,
+          limit: result.limit
         },
       });
     }
- 
+
   } catch (error) {
     return res.status(500).json({
       message: "Error getting category list",
@@ -138,7 +138,7 @@ export const updateCategory = async (req: any, res: any) => {
     }
     const { name } = req.body;
     const { id } = req.params;
-    const categoryExists = await Category.findOne({ name , _id: { $ne: id } });
+    const categoryExists = await Category.findOne({ name, _id: { $ne: id } });
     if (categoryExists) {
       return res.status(404).json({
         message: "Danh mục đã tồn tại",
@@ -168,15 +168,15 @@ export const removeCategory = async (req: any, res: any) => {
   try {
 
     const { id } = req.params;
-    const productsToUpdate = await Product.find({categoryId:id})
+    const productsToUpdate = await Product.find({ categoryId: id })
     const newCategoryId = '65781e8b3d0129ac4e8355bd';
     let newCategory = await Category.findById(newCategoryId);
-     await Promise.all(productsToUpdate.map(async (product:any) => {
-        newCategory.products.push(product._id)
+    await Promise.all(productsToUpdate.map(async (product: any) => {
+      newCategory.products.push(product._id)
     }));
-      const removedCategory = await Category.deleteOne({_id:id});
-      console.log(removedCategory);
-      await newCategory.save();
+    const removedCategory = await Category.deleteOne({ _id: id });
+    console.log(removedCategory);
+    await newCategory.save();
     res.status(200).json({
       message: "Category remove successfully",
       data: removedCategory,
@@ -188,7 +188,7 @@ export const removeCategory = async (req: any, res: any) => {
   }
 };
 export const getAllDeleteCategory = async (req, res) => {
-  
+
   try {
     const query = req.query;
     const options = {
@@ -197,67 +197,67 @@ export const getAllDeleteCategory = async (req, res) => {
       sort: query.sort || "createdAt",
       order: query.order || "desc",
     };
-      const totalCategory = await (Category as any).findWithDeleted({ deleted: true });
-      const totalPages = Math.ceil(totalCategory.length / options.limit);
-      const category = await (Category as any).findWithDeleted({ deleted: true }).sort({
-        [options.sort as string]: options.order as string,
-      }).skip((options.page) * options.limit  ).limit(options.limit as number);
-      const result = dataQueryPaginate(totalCategory,category,+options.limit, +options.page,totalPages)
-      return res.status(200).json({
-          message: "Lấy tất cả sản phẩm đã bị xóa",
-          data:result,  
-      });
-  } catch (error) {
-      return res.status(500).json({
-          message: error,
-      })
-  }
-};
-
-export const remove = async (req,res) => {
-  try {
-    const id = req.params.id
-    const category = await Category.findById(id)
-  
-    if(!category) {
-      return res.status(400).json({
-        message: "Không tìm thấy danh mục",
-    })
-    }
-    if(category.name === "Khác"){
-      return res.status(404).json({
-        message: "Danh mục này không được xóa",
-    })``
-    }
-    if (category) {
-      await (category as any).delete()
-  }
+    const totalCategory = await (Category as any).findWithDeleted({ deleted: true });
+    const totalPages = Math.ceil(totalCategory.length / options.limit);
+    const category = await (Category as any).findWithDeleted({ deleted: true }).sort({
+      [options.sort as string]: options.order as string,
+    }).skip((options.page) * options.limit).limit(options.limit as number);
+    const result = dataQueryPaginate(totalCategory, category, +options.limit, +options.page, totalPages)
     return res.status(200).json({
-      message: "Xoá danh mục thành công chuyển sang thùng rác",
-      data:category
-  })
+      message: "Lấy tất cả sản phẩm đã bị xóa",
+      data: result,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error,
-  })
+    })
+  }
+};
+
+export const remove = async (req, res) => {
+  try {
+    const id = req.params.id
+    const category = await Category.findById(id)
+
+    if (!category) {
+      return res.status(400).json({
+        message: "Không tìm thấy danh mục",
+      })
+    }
+    if (category.name === "Khác") {
+      return res.status(404).json({
+        message: "Danh mục này không được xóa",
+      })``
+    }
+    if (category) {
+      await (category as any).delete()
+    }
+    return res.status(200).json({
+      message: "Xoá danh mục thành công chuyển sang thùng rác",
+      data: category
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message: error,
+    })
   }
 }
 export const restoreCategory = async (req, res) => {
   try {
-      const restoredCategory = await (Category as any).restore({ _id: req.params.id }, { new: true });
-      if (!restoredCategory) {
-          return res.status(400).json({
-              message: "Danh mục không tồn tại hoặc đã được khôi phục trước đó.",
-          });
-      }
-
-      return res.status(200).json({
-          message: "Khôi phục danh mục thành công.",
-          data: restoredCategory,
-      });
-  } catch (error) {
+    const restoredCategory = await (Category as any).restore({ _id: req.params.id }, { new: true });
+    if (!restoredCategory) {
       return res.status(400).json({
-          message: error.message,
+        message: "Danh mục không tồn tại hoặc đã được khôi phục trước đó.",
       });
+    }
+
+    return res.status(200).json({
+      message: "Khôi phục danh mục thành công.",
+      data: restoredCategory,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
   }
 };

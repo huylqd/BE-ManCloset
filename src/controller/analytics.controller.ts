@@ -1,6 +1,6 @@
-import Bill from "../model/order";
+import Bill from "../model/order.js";
 import { Request, Response } from "express";
-import User from "../model/user";
+import User from "../model/user.js";
 
 // Lấy ngày bắt đầu và kết thúc của tháng hiện tại
 const startOfMonth = new Date(

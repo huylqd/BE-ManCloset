@@ -1,5 +1,5 @@
-import Coupon from "../model/coupon";
-import { couponSchema } from "../schema/couponSchema";
+import Coupon from "../model/coupon.js";
+import { couponSchema } from "../schema/couponSchema.js";
 
 export const getAllCoupon = async (req: any, res: any) => {
   try {

@@ -1,5 +1,5 @@
-import User from "../model/user"
-import { sendMailOrder, sendMailPaid } from "../utils/sendMail";
+import User from "../model/user.js"
+import { sendMailOrder, sendMailPaid } from "../utils/sendMail.js";
 
 export const SendMailOrderPaid = async (order) => {
     try {

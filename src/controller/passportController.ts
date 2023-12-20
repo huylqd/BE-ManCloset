@@ -1,12 +1,12 @@
 
 import { Strategy as GoogleStrategy } from 'passport-google-oauth2';
-import Auth from "../model/user"
+import Auth from "../model/user.js"
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'
-import cart from '../model/cart';
+import cart from '../model/cart.js';
 dotenv.config()
-const {CUSTOMER_ID,CUSTOMER_SECRET_CODE,ACCESSTOKEN_SECRET,REFESHTOKEN_SECRET} = process.env
+const { CUSTOMER_ID, CUSTOMER_SECRET_CODE, ACCESSTOKEN_SECRET, REFESHTOKEN_SECRET } = process.env
 passport.use(new GoogleStrategy({
     clientID: CUSTOMER_ID,
     clientSecret: CUSTOMER_SECRET_CODE,
@@ -21,12 +21,12 @@ passport.use(new GoogleStrategy({
         if (isExitUser.isBlocked) {
             return done(null, false, { message: "Tài khoản tạm thời bị khóa" });
         }
-        
-        
+
+
         if (isExitUser) {
             const token = jwt.sign({ _id: isExitUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
-            const refreshToken = jwt.sign({ _id: isExitUser._id }, REFESHTOKEN_SECRET , { expiresIn: "4h" })
-            return done(null, { user: isExitUser, accessToken: token, refreshToken:refreshToken  });
+            const refreshToken = jwt.sign({ _id: isExitUser._id }, REFESHTOKEN_SECRET, { expiresIn: "4h" })
+            return done(null, { user: isExitUser, accessToken: token, refreshToken: refreshToken });
         } else {
             try {
                 const newUser = new Auth({
@@ -34,20 +34,20 @@ passport.use(new GoogleStrategy({
                     googleId: profile.id,
                     name: profile.name.familyName,
                     email: profile.emails[0].value,
-                    avatar:  profile.picture,                                      
+                    avatar: profile.picture,
                     password: "Không có mật khẩu",
                 });
                 console.log(newUser);
-                
-                 await cart.create({
+
+                await cart.create({
                     user_id: newUser._id,
                     products: [],
-                  });
-               
+                });
+
                 const token = jwt.sign({ _id: newUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
-                const refreshToken = jwt.sign({ _id: newUser._id },REFESHTOKEN_SECRET , { expiresIn: "4h" })
+                const refreshToken = jwt.sign({ _id: newUser._id }, REFESHTOKEN_SECRET, { expiresIn: "4h" })
                 await newUser.save();
-                done(null, { user: newUser, accessToken: token, refreshToken:refreshToken });
+                done(null, { user: newUser, accessToken: token, refreshToken: refreshToken });
             } catch (error) {
                 // Xử lý lỗi chèn (trường hợp trùng lặp)
                 if (error.code === 11000) {
@@ -61,17 +61,17 @@ passport.use(new GoogleStrategy({
     }
 ));
 
-passport.serializeUser(({ user, accessToken,refreshToken }, done) => {
-    done(null, { user, accessToken,refreshToken })
+passport.serializeUser(({ user, accessToken, refreshToken }: any, done) => {
+    done(null, { user, accessToken, refreshToken })
 });
-passport.deserializeUser(({ user, accessToken,refreshToken }, done) => {
-    done(null, { user, accessToken,refreshToken })
+passport.deserializeUser(({ user, accessToken, refreshToken }: any, done) => {
+    done(null, { user, accessToken, refreshToken })
 });
 
 export const LoginWithGoogle = (req, res) => {
-    const { accessToken,user,refreshToken } = req.user;
+    const { accessToken, user, refreshToken } = req.user;
 
-    
+
     res.cookie("refreshToken", refreshToken, {
         httpOnly: false,
         secure: false,
@@ -86,7 +86,7 @@ export const LoginWithGoogle = (req, res) => {
         // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
         sameSite: "strict"
     })
-   
+
     res.cookie("user", JSON.stringify(user), {
         httpOnly: false,
         secure: false,
@@ -94,10 +94,10 @@ export const LoginWithGoogle = (req, res) => {
         // Ngăn chặn tấn công CSRF -> Những cái http, request chỉ được đến từ sameSite
         sameSite: "strict"
     })
-    res.status(302).redirect(`http://localhost:3000`);   
-    return res.status(200).json({ 
-        data:req.user
+    res.status(302).redirect(`http://localhost:3000`);
+    return res.status(200).json({
+        data: req.user
     })
-    
+
 }
 

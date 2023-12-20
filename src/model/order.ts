@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IOrder, OrderStatus, PaymentStatus } from "../interface/order";
+import { IOrder, OrderStatus, PaymentStatus } from "../interface/order.js";
 import mongoosePaginate from "mongoose-paginate-v2";
 const itemSchema = new mongoose.Schema(
   {

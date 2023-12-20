@@ -1,9 +1,9 @@
 import { Response, Request, NextFunction } from "express";
-import HTTP_STATUS from "../constants/httpStatus";
-import { AddToCartReqBody } from "../model/requests/cart.requests";
+import HTTP_STATUS from "../constants/httpStatus.js";
+import { AddToCartReqBody } from "../model/requests/cart.requests.js";
 import { ParamsDictionary } from "express-serve-static-core";
-import Cart from "../model/cart";
-import Product from "../model/product";
+import Cart from "../model/cart.js";
+import Product from "../model/product.js";
 import { ObjectId } from "mongodb";
 /**
  * @Description: get all product in cart
@@ -102,9 +102,8 @@ export const addProductToCard = async (
     }
     if (product.quantity + isProductExistInCart.quantity > inventory) {
       return res.status(400).json({
-        message: `Bạn chỉ thêm được ${
-          inventory - isProductExistInCart.quantity
-        } sản phẩm vào giỏ hàng!`,
+        message: `Bạn chỉ thêm được ${inventory - isProductExistInCart.quantity
+          } sản phẩm vào giỏ hàng!`,
       });
     }
 
@@ -152,7 +151,7 @@ type TProductInCart = {
 export const deleteProductInCart = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const products:TProductInCart[] = req.body;
+    const products: TProductInCart[] = req.body;
 
     const cart = await Cart.find({ user_id: id });
 

@@ -5,8 +5,8 @@ import {
   productSold,
   Thongkedonhang,
   topUserMuaHang,
-} from "../controller/analytics.controller";
-import { checkPermission } from "../middleware/checkPermission";
+} from "../controller/analytics.controller.js";
+import { checkPermission } from "../middleware/checkPermission.js";
 
 const router = express.Router();
 

@@ -1,8 +1,8 @@
-import order from "../model/order";
-import product from "../model/product";
-import { sendMailPaid } from "../utils/sendMail";
-import { DeleteProductInCart } from "./cartService";
-import { SendMailOrderPaid } from "./sendMailService";
+import order from "../model/order.js";
+import product from "../model/product.js";
+import { sendMailPaid } from "../utils/sendMail.js";
+import { DeleteProductInCart } from "./cartService.js";
+import { SendMailOrderPaid } from "./sendMailService.js";
 
 // Kiểm tra xem có tài liệu nào có order_id cụ thể không
 export const checkOrderSuccessVnPay = async (transactionId) => {

@@ -1,5 +1,5 @@
-import { IOrder } from "../interface/order";
-import { ProductItem } from "../interface/product";
+import { IOrder } from "../interface/order.js";
+import { ProductItem } from "../interface/product.js";
 
 export function generateHeader(doc) {
     doc

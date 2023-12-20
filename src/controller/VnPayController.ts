@@ -1,13 +1,14 @@
 import dotenv from "dotenv";
-import moment = require("moment");
-import { createBill, updateBill } from "./orderController";
-import order from "../model/order";
+
+import moment from "moment";
+import { createBill, updateBill } from "./orderController.js";
+import order from "../model/order.js";
 import {
   checkOrderFailedVnPay,
   checkOrderSuccessVnPay,
-} from "../service/orderService";
-import Bill from "../model/order";
-import { sendMailPaid } from "../utils/sendMail";
+} from "../service/orderService.js";
+// import Bill from "../model/order.js";
+// import { sendMailPaid } from "../utils/sendMail.js";
 dotenv.config();
 
 export const create_payment_url = async (req, res) => {

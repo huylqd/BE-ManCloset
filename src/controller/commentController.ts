@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import Comment from "../model/comment";
-import { commentSchema } from "../schema/commentSchema";
-import { checkUserInOrder } from "../service/orderService";
+import Comment from "../model/comment.js";
+import { commentSchema } from "../schema/commentSchema.js";
+import { checkUserInOrder } from "../service/orderService.js";
 
 export const getAllCommentByProductId = async (req: Request, res: Response) => {
   try {

@@ -1,11 +1,11 @@
-import { orderSchema } from "../schema/orderSchema";
-import Bill from "../model/order";
+import { orderSchema } from "../schema/orderSchema.js";
+import Bill from "../model/order.js";
 import { Request, Response, json } from "express";
 import fs from "fs";
 import PDFDocument from "pdfkit";
-import User from "../model/user";
-import product from "../model/product";
-import { ProductItem } from "../interface/product";
+import User from "../model/user.js";
+import product from "../model/product.js";
+import { ProductItem } from "../interface/product.js";
 import {
   generateCustomerInformation,
   generateFooter,
@@ -13,18 +13,18 @@ import {
   generateInvoiceTable,
   generateTableRow,
   removeAccents,
-} from "../utils/exportBill";
+} from "../utils/exportBill.js";
 import {
   IOrder,
   IOrderItem,
   OrderStatus,
   PaymentStatus,
-} from "../interface/order";
+} from "../interface/order.js";
 import { SortOrder } from "mongoose";
-import { checkInteger } from "../utils/checkNumber";
-import { dataQuery } from "../utils/dataQuery";
-import { sendMailOrder } from "../utils/sendMail";
-import { SendMailOrderSuccess } from "../service/sendMailService";
+import { checkInteger } from "../utils/checkNumber.js";
+import { dataQuery } from "../utils/dataQuery.js";
+import { sendMailOrder } from "../utils/sendMail.js";
+import { SendMailOrderSuccess } from "../service/sendMailService.js";
 
 export const getAllBill = async (req: Request, res: Response) => {
   const {
@@ -257,7 +257,7 @@ export const createBill = async (req: Request, res: Response) => {
     const items = req.body.items;
     console.log("item", items);
 
-    for (const item of items) { 
+    for (const item of items) {
       const result = await product.findOne({ _id: item.product_id });
 
       if (!result) {
@@ -299,7 +299,7 @@ export const createBill = async (req: Request, res: Response) => {
 export const updateBill = async (req: Request, res: Response) => {
   try {
     const { orderStatus, paymentStatus } = req.body;
-    const {id} = req.params
+    const { id } = req.params
     const bill = await Bill.findById(req.params.id);
 
     if (!bill) {
@@ -308,44 +308,44 @@ export const updateBill = async (req: Request, res: Response) => {
       });
     }
 
-    if(orderStatus) {
+    if (orderStatus) {
       await Bill.updateOne({
         _id: id,
       },
-      {
-        $push: {
-          history_order_status: {
-            status: orderStatus,
-            updatedAt: new Date()
+        {
+          $push: {
+            history_order_status: {
+              status: orderStatus,
+              updatedAt: new Date()
+            }
           }
-        }
-      })
+        })
 
       await Bill.updateOne({
         _id: id,
       },
-      {
-        $set: {
-          current_order_status: {
-            status: orderStatus,
-            updatedAt: new Date()
+        {
+          $set: {
+            current_order_status: {
+              status: orderStatus,
+              updatedAt: new Date()
+            }
           }
-        }
-      })
+        })
     }
 
     if (paymentStatus) {
       await Bill.updateOne({
         _id: id,
       },
-      {
-        $set: {
-          payment_status: {
-            status: paymentStatus,
-            updatedAt: new Date()
+        {
+          $set: {
+            payment_status: {
+              status: paymentStatus,
+              updatedAt: new Date()
+            }
           }
-        }
-      })
+        })
     }
 
     const updatedBill = await Bill.findById(id)

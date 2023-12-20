@@ -1,4 +1,4 @@
-import cart from "../model/cart";
+import cart from "../model/cart.js";
 
 export const DeleteProductInCart = async (user_id, items) => {
   try {

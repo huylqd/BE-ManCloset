@@ -5,8 +5,8 @@ import {
   getAllComment,
 
   getAllCommentByProductId,
-} from "../controller/commentController";
-import { checkPermission } from "../middleware/checkPermission";
+} from "../controller/commentController.js";
+import { checkPermission } from "../middleware/checkPermission.js";
 
 const router = express.Router();
 

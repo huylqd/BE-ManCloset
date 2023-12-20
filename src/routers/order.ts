@@ -10,8 +10,8 @@ import {
   getBills,
   getUserOrdersHistory,
   updateBill,
-} from "../controller/orderController";
-import { wrapRequestHandler } from "../utils/handlers";
+} from "../controller/orderController.js";
+import { wrapRequestHandler } from "../utils/handlers.js";
 const router = express.Router();
 
 router.get("/order", getAllBill);

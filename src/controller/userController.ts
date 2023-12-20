@@ -1,19 +1,19 @@
-import User from "../model/user";
-import { signUpSchema, signInSchema, userSchema } from "../schema/userSchema";
+import User from "../model/user.js";
+import { signUpSchema, signInSchema, userSchema } from "../schema/userSchema.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
-import { verifyRefreshToken, verifyToken } from "../middleware/checkPermission";
-import Cart from "../model/cart";
+import { verifyRefreshToken, verifyToken } from "../middleware/checkPermission.js";
+import Cart from "../model/cart.js";
 import dotenv from "dotenv";
-import { UpdateUserReqBody } from "../model/requests/user.requrest";
+import { UpdateUserReqBody } from "../model/requests/user.requrest.js";
 import { Request, Response } from "express";
-import HTTP_STATUS from "../constants/httpStatus";
-import cloudinary from "../config/cloudinary";
+import HTTP_STATUS from "../constants/httpStatus.js";
+import cloudinary from "../config/cloudinary.js";
 import crypto from "crypto-js";
-import { checkInteger } from "../utils/checkNumber";
-import { dataQueryPaginate } from "../utils/dataQuery";
-import { sendMailClose, sendMailForgotPassword, sendMailOpen, sendMailPassword } from "../utils/sendMail";
-import { generateRandomString } from "../utils/random";
+import { checkInteger } from "../utils/checkNumber.js";
+import { dataQueryPaginate } from "../utils/dataQuery.js";
+import { sendMailClose, sendMailForgotPassword, sendMailOpen, sendMailPassword } from "../utils/sendMail.js";
+import { generateRandomString } from "../utils/random.js";
 dotenv.config()
 
 export const signUp = async (req, res) => {
@@ -444,7 +444,7 @@ export const lockUser = async (req, res) => {
 }
 
 export const getWishListByUser = async (req, res) => {
-  
+
   try {
     const id = req.params.userId;
     const user = await User.findById(id);
@@ -473,7 +473,7 @@ export const addRemoveWishLish = async (req, res) => {
       })
     }
     const itemToAdd = req.body;
-    
+
     const { _id } = req.body;
     if (_id) {
       user.wishList = user.wishList.filter(item => item._id.toString() !== _id.toString());
@@ -486,7 +486,7 @@ export const addRemoveWishLish = async (req, res) => {
     } else {
       const existingItem = user.wishList.find(item => item.name === itemToAdd.name);
       console.log(existingItem);
-      
+
       if (existingItem) {
         res.status(404).json({
           message: 'Đã tồn tại trong danh sách yêu thích'
@@ -582,35 +582,35 @@ export const updateAvatar = async (req, res) => {
 }
 
 // Chuyển người dùng vào trong thùng rác
-export const removeUserToTrash = async (req,res) => {
+export const removeUserToTrash = async (req, res) => {
   try {
-     const id = req.params.id
+    const id = req.params.id
     const user = await User.findById(id)
-  
-    if(!user) {
+
+    if (!user) {
       return res.status(400).json({
         message: "Không tìm thấy người dùng",
-    })
+      })
     }
-    if(user && user.role === "admin"){
+    if (user && user.role === "admin") {
       return res.status(400).json({
         message: "Tài khoản admin không thể bị xóa",
-    })
+      })
     }
     if (user) {
       await (user as any).delete()
-  }
+    }
     return res.status(200).json({
       message: "Chuyển người dùng vào ",
-      data:user
-  })
+      data: user
+    })
   } catch (error) {
     return res.status(500).json({
       message: error
     })
   }
 }
-export const getAllDeletedUser = async (req,res) => {
+export const getAllDeletedUser = async (req, res) => {
   try {
     const query = req.query;
     const options = {
@@ -621,33 +621,33 @@ export const getAllDeletedUser = async (req,res) => {
     };
     const totalUser = await (User as any).findWithDeleted({ deleted: true });
     const totalPages = Math.ceil(totalUser.length / options.limit);
-    const user = await (User as any).findWithDeleted({ deleted:true}).sort({
+    const user = await (User as any).findWithDeleted({ deleted: true }).sort({
       [options.sort as string]: options.order as string,
-    }).skip((options.page) * options.limit  ).limit(options.limit as number);
-    const result = dataQueryPaginate(totalUser,user,+options.limit, +options.page,totalPages)
+    }).skip((options.page) * options.limit).limit(options.limit as number);
+    const result = dataQueryPaginate(totalUser, user, +options.limit, +options.page, totalPages)
     return res.status(200).json({
       message: "Tất cả người dùng",
-      data:result,  
-  });
+      data: result,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error
     })
   }
 }
-export const restoreUser = async (req,res) => {
+export const restoreUser = async (req, res) => {
   try {
     const restoredUser = await (User as any).restore({ _id: req.params.id }, { new: true });
-      if (!restoredUser) {
-          return res.status(400).json({
-              message: "Danh mục không tồn tại hoặc đã được khôi phục trước đó.",
-          });
-      }
-
-      return res.status(200).json({
-          message: "Khôi phục danh mục thành công.",
-          data: restoredUser,
+    if (!restoredUser) {
+      return res.status(400).json({
+        message: "Danh mục không tồn tại hoặc đã được khôi phục trước đó.",
       });
+    }
+
+    return res.status(200).json({
+      message: "Khôi phục danh mục thành công.",
+      data: restoredUser,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error
@@ -663,67 +663,67 @@ export const restoreUser = async (req,res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-      const email = req.body.email
-      
-      if (!email) {
-          return res.status(400).json({
-              message: "Không có email!"
-          })
-      }
-      const user = await User.findOne({ email: email })
-      if (!user) {
-          return res.status(404).json({
-              message: "Không tìm thấy người dùng"
-          })
-      }
-      const resetToken = crypto.lib.WordArray.random(32).toString();
-      user.passwordResetToken = crypto.SHA256(resetToken, process.env.ACCESSTOKEN_SECRET).toString();
-      user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-      await user.save()
-      await sendMailForgotPassword(user.name,email,resetToken)
-      return res.status(200).json({
-        message:"Gửi mail thành công",
-        resetToken:resetToken
-      })
-      
-  } catch (error) {
+    const email = req.body.email
+
+    if (!email) {
       return res.status(400).json({
-          message: error.message
+        message: "Không có email!"
       })
+    }
+    const user = await User.findOne({ email: email })
+    if (!user) {
+      return res.status(404).json({
+        message: "Không tìm thấy người dùng"
+      })
+    }
+    const resetToken = crypto.lib.WordArray.random(32).toString();
+    user.passwordResetToken = crypto.SHA256(resetToken, process.env.ACCESSTOKEN_SECRET).toString();
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+    await user.save()
+    await sendMailForgotPassword(user.name, email, resetToken)
+    return res.status(200).json({
+      message: "Gửi mail thành công",
+      resetToken: resetToken
+    })
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    })
   }
 }
 
 
 export const resetPassword = async (req, res) => {
   try {
-      const hashedToken = crypto.SHA256(req.params.token, process.env.ACCESSTOKEN_SECRET).toString();
-      const user = await User.findOne({
-          passwordResetToken: hashedToken,
-          passwordResetExpires: { $gt: Date.now() }
-      })
-      if (!user) {
-          return res.status(400).json({
-              message: "Token reset password hết hạn"
-          })
-      }
-      // const newPassword = generateRandomString(6)
-      const handlePass = await bcrypt.hash(req.body.password, 10);
-      user.password = handlePass;
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      user.passwordChangeAt = Date.now();
-      await user.save();
-      // const token = jwt.sign({ id: user._id }, process.env.ACCESSTOKEN_SECRET, {
-      //     expiresIn: "1d"
-      // })
-      await sendMailPassword(user.name,user.email,req.body.password)
-      return res.status(200).json({
-          message: "Mật khẩu mới được cập nhật",
-          // token
-      })
-  } catch (error) {
+    const hashedToken = crypto.SHA256(req.params.token, process.env.ACCESSTOKEN_SECRET).toString();
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() }
+    })
+    if (!user) {
       return res.status(400).json({
-          message: error.message
+        message: "Token reset password hết hạn"
       })
+    }
+    // const newPassword = generateRandomString(6)
+    const handlePass = await bcrypt.hash(req.body.password, 10);
+    user.password = handlePass;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.passwordChangeAt = Date.now();
+    await user.save();
+    // const token = jwt.sign({ id: user._id }, process.env.ACCESSTOKEN_SECRET, {
+    //     expiresIn: "1d"
+    // })
+    await sendMailPassword(user.name, user.email, req.body.password)
+    return res.status(200).json({
+      message: "Mật khẩu mới được cập nhật",
+      // token
+    })
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    })
   }
 }

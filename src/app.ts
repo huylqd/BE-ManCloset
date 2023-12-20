@@ -1,29 +1,29 @@
 import express from "express";
 import mongoose from "mongoose";
-const multer = require('multer');
-const ExcelJS = require('exceljs');
+import multer from "multer"
+// import ExcelJS from "exceljs"
 import cors from "cors";
-import categoryRouter from "./routers/category";
-import couponRouter from "./routers/coupon";
-import saleRouter from "./routers/sale";
-import { isCheckedSale } from "./controller/saleController";
-import VnPayRouter from "./routers/VnPay";
-import orderRouter from "./routers/order";
-import AnalystRouter from "./routers/analyst";
-import productRouter from "./routers/product";
-import cartRouter from "./routers/cart";
-import messageRouter from "./routers/message";
+import categoryRouter from "./routers/category.js";
+import couponRouter from "./routers/coupon.js";
+import saleRouter from "./routers/sale.js";
+import { isCheckedSale } from "./controller/saleController.js";
+import VnPayRouter from "./routers/VnPay.js";
+import orderRouter from "./routers/order.js";
+import AnalystRouter from "./routers/analyst.js";
+import productRouter from "./routers/product.js";
+import cartRouter from "./routers/cart.js";
+import messageRouter from "./routers/message.js";
 import dotenv from "dotenv";
-import UserRouter from "./routers/auth";
-import commentRouter from "./routers/comment";
+import UserRouter from "./routers/auth.js";
+import commentRouter from "./routers/comment.js";
 import passport from "passport";
-import routerPassport from "./routers/passport";
+import routerPassport from "./routers/passport.js";
 import session from "express-session";
 import cookieParser from "cookie-parser";
-import socket, { Server, Socket }  from "socket.io";
+import socket, { Server, Socket } from "socket.io";
 import http from "http";
-import { SocketServer } from "./config/socket";
-import product from "./model/product";
+import { SocketServer } from "./config/socket.js";
+
 //Config express
 const app: any = express();
 dotenv.config();
@@ -59,7 +59,7 @@ app.use("/", orderRouter);
 app.use("/api", routerPassport);
 app.use("/", UserRouter);
 app.use("/", AnalystRouter);
-app.use("/api/message", messageRouter )
+app.use("/api/message", messageRouter)
 // Cấu hình Multer để xử lý tệp tải lên
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -161,7 +161,7 @@ var onlineUsers = new Map();
 //   })
 // })
 
-io.on("connection", (socket:Socket) => SocketServer(socket))
+io.on("connection", (socket: Socket) => SocketServer(socket))
 
 
 server.listen(process.env.port || port, () => {

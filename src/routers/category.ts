@@ -8,23 +8,23 @@ import {
   removeCategory,
   restoreCategory,
   updateCategory,
-} from "../controller/categoryController";
-import { checkPermission } from "../middleware/checkPermission";
+} from "../controller/categoryController.js";
+import { checkPermission } from "../middleware/checkPermission.js";
 
 const router = express.Router();
 // Lấy tất cả danh mục, lấy theo id
 router.get("/category", getAllCategory);
 router.get("/category/:id", getCategoryById);
 // Thêm sửa xóa
-router.post("/category",(req, res, next) => { checkPermission(req, res, next, 'admin') }, createCategory);
-router.patch("/category/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, updateCategory);
-router.delete("/category/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, removeCategory);
+router.post("/category", (req, res, next) => { checkPermission(req, res, next, 'admin') }, createCategory);
+router.patch("/category/:id", (req, res, next) => { checkPermission(req, res, next, 'admin') }, updateCategory);
+router.delete("/category/:id", (req, res, next) => { checkPermission(req, res, next, 'admin') }, removeCategory);
 // Chuyển danh mục vào thùng rác
-router.delete("/category/remove/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') }, remove);
+router.delete("/category/remove/:id", (req, res, next) => { checkPermission(req, res, next, 'admin') }, remove);
 // Khôi phục danh mục
-router.patch("/category/restore/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') },restoreCategory)
+router.patch("/category/restore/:id", (req, res, next) => { checkPermission(req, res, next, 'admin') }, restoreCategory)
 // Lấy tất cả danh mục trong trong thùng rác
-router.get("/category/moveToTrash/delete",(req, res, next) => { checkPermission(req, res, next, 'admin') },getAllDeleteCategory)
+router.get("/category/moveToTrash/delete", (req, res, next) => { checkPermission(req, res, next, 'admin') }, getAllDeleteCategory)
 
 
 export default router;

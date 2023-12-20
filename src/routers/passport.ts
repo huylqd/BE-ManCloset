@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 
-import {  LoginWithGoogle } from '../controller/passportController';
+import { LoginWithGoogle } from '../controller/passportController.js';
 const routerPassport = express.Router();
 
 routerPassport.get('/auth/google',
