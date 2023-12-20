@@ -9,10 +9,11 @@ import { UpdateUserReqBody } from "../model/requests/user.requrest";
 import { Request, Response } from "express";
 import HTTP_STATUS from "../constants/httpStatus";
 import cloudinary from "../config/cloudinary";
-
+import crypto from "crypto-js";
 import { checkInteger } from "../utils/checkNumber";
 import { dataQueryPaginate } from "../utils/dataQuery";
-import { sendMailClose, sendMailOpen } from "../utils/sendMail";
+import { sendMailClose, sendMailForgotPassword, sendMailOpen, sendMailPassword } from "../utils/sendMail";
+import { generateRandomString } from "../utils/random";
 dotenv.config()
 
 export const signUp = async (req, res) => {
@@ -589,6 +590,11 @@ export const removeUserToTrash = async (req,res) => {
         message: "Không tìm thấy người dùng",
     })
     }
+    if(user && user.role === "admin"){
+      return res.status(400).json({
+        message: "Tài khoản admin không thể bị xóa",
+    })
+    }
     if (user) {
       await (user as any).delete()
   }
@@ -647,4 +653,75 @@ export const restoreUser = async (req,res) => {
   }
 }
 
+
+
 // Lấy tất cả người dùng trong thùng rác
+
+
+
+export const forgotPassword = async (req, res) => {
+  try {
+      const email = req.body.email
+      
+      if (!email) {
+          return res.status(400).json({
+              message: "Không có email!"
+          })
+      }
+      const user = await User.findOne({ email: email })
+      if (!user) {
+          return res.status(404).json({
+              message: "Không tìm thấy người dùng"
+          })
+      }
+      const resetToken = crypto.lib.WordArray.random(32).toString();
+      user.passwordResetToken = crypto.SHA256(resetToken, process.env.ACCESSTOKEN_SECRET).toString();
+      user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+      await user.save()
+      await sendMailForgotPassword(user.name,email,resetToken)
+      return res.status(200).json({
+        message:"Gửi mail thành công",
+        resetToken:resetToken
+      })
+      
+  } catch (error) {
+      return res.status(400).json({
+          message: error.message
+      })
+  }
+}
+
+
+export const resetPassword = async (req, res) => {
+  try {
+      const hashedToken = crypto.SHA256(req.params.token, process.env.ACCESSTOKEN_SECRET).toString();
+      const user = await User.findOne({
+          passwordResetToken: hashedToken,
+          passwordResetExpires: { $gt: Date.now() }
+      })
+      if (!user) {
+          return res.status(400).json({
+              message: "Token reset password hết hạn"
+          })
+      }
+      // const newPassword = generateRandomString(6)
+      const handlePass = await bcrypt.hash(req.body.password, 10);
+      user.password = handlePass;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      user.passwordChangeAt = Date.now();
+      await user.save();
+      // const token = jwt.sign({ id: user._id }, process.env.ACCESSTOKEN_SECRET, {
+      //     expiresIn: "1d"
+      // })
+      await sendMailPassword(user.name,user.email,req.body.password)
+      return res.status(200).json({
+          message: "Mật khẩu mới được cập nhật",
+          // token
+      })
+  } catch (error) {
+      return res.status(400).json({
+          message: error.message
+      })
+  }
+}

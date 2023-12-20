@@ -29,6 +29,9 @@ export interface IUser {
   googleId:string;
   authType:string,
   role: string;
+  passwordResetToken:string,
+  passwordResetExpires:number,
+  passwordChangeAt: number
 }
 
 export interface IRequestWithUser extends Request {

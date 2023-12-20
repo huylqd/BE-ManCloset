@@ -92,6 +92,15 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     enum: ['local', 'google', 'facebook'],
     default: 'local'
   },
+  passwordResetToken: {
+    type: String
+},
+passwordResetExpires: {
+    type: Number
+},
+passwordChangeAt: {
+    type: Number
+},
 },
   { timestamps: true, versionKey: false }
 );

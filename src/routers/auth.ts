@@ -1,5 +1,5 @@
 import express from 'express'
-import { signUp, signIn, refeshToken, getAllUser, getOneUser, updateAddress, deleteAddress, updateUser, getWishListByUser, removeWishList, lockUser, addRemoveWishLish, getUserAddress, addNewAddress, updateAvatar, getAllContact, getAllDeletedUser, removeUserToTrash, restoreUser } from '../controller/userController';
+import { signUp, signIn, refeshToken, getAllUser, getOneUser, updateAddress, deleteAddress, updateUser, getWishListByUser, removeWishList, lockUser, addRemoveWishLish, getUserAddress, addNewAddress, updateAvatar, getAllContact, getAllDeletedUser, removeUserToTrash, restoreUser, forgotPassword, resetPassword } from '../controller/userController';
 
 import { checkPermission } from '../middleware/checkPermission';
 import { uploadImage } from '../config/cloudinary';
@@ -32,4 +32,6 @@ router.patch("/user/:userId/avatar", uploadImage.array("avatar", 5), updateAvata
 router.get("/user/moveToTrash/delete",(req, res, next) => { checkPermission(req, res, next, 'admin') },getAllDeletedUser)
 router.delete("/user/remove/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') },removeUserToTrash)
 router.patch("/user/restore/:id",(req, res, next) => { checkPermission(req, res, next, 'admin') },restoreUser)
+router.post('/user/forgotPassword', forgotPassword)
+router.patch('/user/resetpassword/:token', resetPassword)
 export default router

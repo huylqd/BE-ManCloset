@@ -53,7 +53,6 @@ export const getProductDeletedById = async (req: Request, res: Response) => {
   try {
     const product = await (Product as any).findWithDeleted({_id:req.params.id});
     if (!product) throw new Error("Product not found");
-    
     return res.status(200).json({ data: product });
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -74,7 +73,6 @@ export const createProduct = async (req: any, res: Response) => {
         message: "Sản phẩm đã tồn tại",
       });
     }
-
     const fileImages = req.files;
     if (!fileImages || fileImages.length === 0) {
       return res.status(400).json({
@@ -91,8 +89,7 @@ export const createProduct = async (req: any, res: Response) => {
     const product = await Product.create({
       ...req.body,
       properties: updatedProperties,
-    });
-
+    })
     await Category.findOneAndUpdate(product.categoryId, {
       $addToSet: {
         products: product._id,
@@ -117,16 +114,9 @@ export const updateProduct = async (req: any, res: Response) => {
       });
     }
     const productId = req.params.id;
-   
-    
-    
-
-    // Tìm sản phẩm theo id và cập nhật dữ liệu mới
-    
+    // Tìm sản phẩm theo id và cập nhật dữ liệu mới 
     const product = await Product.findById(productId);
-   
       const fileImages = req.files;
-    
       if(fileImages.length !== 0){
         const imagePaths = fileImages.map((file) => file.path);
         const updatedProperties = req.body.properties.map((property, index) => ({
@@ -143,27 +133,22 @@ export const updateProduct = async (req: any, res: Response) => {
     
           await cloudinary.uploader.destroy(publicId);
         }
-    
-       
         const updatedProduct = await Product.findOneAndUpdate(
           { _id: productId },
           {
             ...req.body,
             properties: updatedProperties,
-          },
-    
+          },   
           { new: true }
         );
         if (!updatedProduct) {
           return res.sendStatus(404);
         }
-    
         // Xóa sản phẩm cũ khỏi danh sách products của category cũ
         const oldCategoryId = updatedProduct.categoryId;
         await Category.findByIdAndUpdate(oldCategoryId, {
           $pull: { products: productId },
-        });
-    
+        });   
         // Thêm sản phẩm mới vào danh sách products của category mới
         const newCategoryId = req.body.categoryId;
         if (newCategoryId) {
@@ -177,11 +162,6 @@ export const updateProduct = async (req: any, res: Response) => {
           data:updatedProduct
         });
       }else{
-        console.log(req.body);
-        // const {properties} = req.body;
-        // if(properties){
-
-        // }
         const updatedProperties = req.body.properties.map((property, index) => ({
           ...property,
           imageUrl: product.properties[0].imageUrl,
@@ -198,7 +178,6 @@ export const updateProduct = async (req: any, res: Response) => {
         await Category.findByIdAndUpdate(oldCategoryId, {
           $pull: { products: productId },
         });
-    
         // Thêm sản phẩm mới vào danh sách products của category mới
         const newCategoryId = req.body.categoryId;
         if (newCategoryId) {
@@ -212,12 +191,6 @@ export const updateProduct = async (req: any, res: Response) => {
           data: updatedProduct
         });
       }
-     
-    
-  
-     
-    
-    
   } catch (error) {
     return res.status(500).json({
       message: "Cập nhật sản phẩm không thành công",
@@ -507,7 +480,6 @@ export const getProductByCategoryId = async (req: any, res: Response) => {
 export const FilterProductByDiscount = async (req: Request, res: Response) => {
   try {
     const { categoryId } = req.params;
-
     const discountedProducts = await Product.find({
       categoryId: categoryId,
       discount: { $gt: 0 },
