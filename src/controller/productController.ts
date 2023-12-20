@@ -13,7 +13,7 @@ export const getAllProduct = async (req: any, res: any) => {
     _page = 1,
     _limit = _page == 0 ? 10000000 : 8,
     _sort = "createdAt",
-    _order = "asc",
+    _order = "desc",
     _expand,
   } = req.query;
   const options: any = {
@@ -339,7 +339,7 @@ export const FilterProductByPrice = async (req, res) => {
         data: products.docs,
         pagination: {
           currentPage: products.page,
-          totalsPages: products.totalPages,
+          totalPages: products.totalPages,
           totalItem: products.totalDocs,
           sizePerPage: products.limit,
         },
@@ -363,7 +363,7 @@ export const FilterProductByPrice = async (req, res) => {
         data: products.docs,
         pagination: {
           currentPage: products.page,
-          totalsPages: products.totalPages,
+          totalPages: products.totalPages,
           totalItem: products.totalDocs,
           sizePerPage: products.limit,
         },
@@ -386,7 +386,7 @@ export const FilterProductByPrice = async (req, res) => {
         data: products.docs,
         pagination: {
           currentPage: products.page,
-          totalsPages: products.totalPages,
+          totalPages: products.totalPages,
           totalItem: products.totalDocs,
           sizePerPage: products.limit,
         },
@@ -435,7 +435,7 @@ export const FilterProductBySize = async (req, res) => {
       data: filteredProducts.docs,
       pagination: {
         currentPage: filteredProducts.page,
-        totalsPages: filteredProducts.totalPages,
+        totalPages: filteredProducts.totalPages,
         totalItem: filteredProducts.totalDocs,
         sizePerPage: filteredProducts.limit,
       },
@@ -467,7 +467,7 @@ export const getProductByCategoryId = async (req: any, res: Response) => {
       data: product.docs,
       pagination: {
         currentPage: product.page,
-        totalsPages: product.totalPages,
+        totalPages: product.totalPages,
         totalItem: product.totalDocs,
         sizePerPage: product.limit,
       },
