@@ -71,6 +71,9 @@ export const productSold = async (req: Request, res: Response) => {
         },
       },
       {
+        $limit: 5
+      },
+      {
         $project: {
           _id: 0, // Loại bỏ trường _id
           product_id: "$_id", // Đặt lại tên trường product_id
