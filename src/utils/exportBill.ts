@@ -134,41 +134,7 @@ export function generateInvoiceTable(doc, product: ProductItem[], invoice) {
         formatCurrency(invoice.total_price)
     );
 
-    // const paidToDatePosition = subtotalPosition + 20;
-    // generateTableRow(
-    //     doc,
-    //     paidToDatePosition,
-    //     "",
-    //     "",
-    //     "Paid To Date",
-    //     "",
-    //     formatCurrency(invoice.paid)
-    // );
-
-    // const duePosition = paidToDatePosition + 25;
-    // doc.font("Helvetica-Bold");
-    // generateTableRow(
-    //     doc,
-    //     duePosition,
-    //     "",
-    //     "",
-    //     "Balance Due",
-    //     "",
-    //     formatCurrency(invoice.subtotal - invoice.paid)
-    // );
     doc.font("Helvetica");
 }
 
 
-
-// export function createInvoice(invoice: IOrder, path) {
-//     let doc = new PDFDocument({ size: "A4", margin: 50 });
-
-//     generateHeader(doc);
-//     generateCustomerInformation(doc, invoice);
-//     generateInvoiceTable(doc, invoice);
-//     generateFooter(doc);
-
-//     doc.end();
-//     doc.pipe(fs.createWriteStream(path));
-// }
