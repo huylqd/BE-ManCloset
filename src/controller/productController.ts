@@ -53,6 +53,7 @@ export const getProductDeletedById = async (req: Request, res: Response) => {
   try {
     const product = await (Product as any).findWithDeleted({ _id: req.params.id });
     if (!product) throw new Error("Product not found");
+
     return res.status(200).json({ data: product });
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -73,6 +74,7 @@ export const createProduct = async (req: any, res: Response) => {
         message: "Sản phẩm đã tồn tại",
       });
     }
+
     const fileImages = req.files;
     if (!fileImages || fileImages.length === 0) {
       return res.status(400).json({
@@ -89,7 +91,8 @@ export const createProduct = async (req: any, res: Response) => {
     const product = await Product.create({
       ...req.body,
       properties: updatedProperties,
-    })
+    });
+
     await Category.findOneAndUpdate(product.categoryId, {
       $addToSet: {
         products: product._id,
@@ -114,7 +117,9 @@ export const updateProduct = async (req: any, res: Response) => {
       });
     }
     const productId = req.params.id;
-    // Tìm sản phẩm theo id và cập nhật dữ liệu mới 
+
+    // Tìm sản phẩm theo id và cập nhật dữ liệu mới
+
     const product = await Product.findById(productId);
     const fileImages = req.files;
     if (fileImages.length !== 0) {
@@ -283,7 +288,9 @@ export const getAllDelete = async (req, res) => {
   };
   try {
     // const totalProducts = await (Product as any).countDocuments({ deleted: true });
-    const totalProducts = await (Product as any).findWithDeleted({ deleted: true })
+    const totalProducts = await (Product as any).findWithDeleted({
+      deleted: true,
+    });
     // Kiểm tra nếu trang hiện tại vượt quá tổng số trang, đặt lại trang cuối cùng
     const totalPages = Math.ceil(totalProducts.length / options.limit);
     const product = await (Product as any).findWithDeleted({ deleted: true }).sort({
@@ -480,6 +487,7 @@ export const getProductByCategoryId = async (req: any, res: Response) => {
 export const FilterProductByDiscount = async (req: Request, res: Response) => {
   try {
     const { categoryId } = req.params;
+
     const discountedProducts = await Product.find({
       categoryId: categoryId,
       discount: { $gt: 0 },
@@ -490,8 +498,6 @@ export const FilterProductByDiscount = async (req: Request, res: Response) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
-
 
 export const getInventoryOfProduct = async (req: Request, res: Response) => {
   try {
@@ -504,22 +510,26 @@ export const getInventoryOfProduct = async (req: Request, res: Response) => {
 
     if (!product) {
       return res.status(404).json({
-        message: "Không tìm thấy sản phẩm"
-      })
+        message: "Không tìm thấy sản phẩm",
+      });
     }
 
-    const indexOfColor = product.properties.findIndex(item => item.color === color)
-    const indexOfSize = product.properties[indexOfColor].variants.findIndex(item => item.size === size)
-    const inventory = product.properties[indexOfColor].variants[indexOfSize].quantity
+    const indexOfColor = product.properties.findIndex(
+      (item) => item.color === color
+    );
+    const indexOfSize = product.properties[indexOfColor].variants.findIndex(
+      (item) => item.size === size
+    );
+    const inventory =
+      product.properties[indexOfColor].variants[indexOfSize].quantity;
 
     return res.status(200).json({
-      result: inventory
-    })
-
+      result: inventory,
+    });
   } catch (error) {
     return res.status(500).json({
-      message: error
-    })
+      message: error,
+    });
   }
 };
 
@@ -531,34 +541,47 @@ export const ImportProductByExcel = async (req: any, res: Response) => {
 
     const productData = {};
 
-    workbook.eachSheet((worksheet, sheetId): any => {
-      worksheet.getRow(1).eachCell({ includeEmpty: true }, cell => cell.value = cell.text);
-      worksheet.eachRow((row, rowNumber) => {
-        const productId: any = row.getCell('A').value;
-        if (!productData[productId]) {
-          productData[productId] = {
-            productName: row.getCell('A').value,
-            price: row.getCell('B').value,
-            description: row.getCell('C').value,
-            categoryId: row.getCell('D').value,
-            discount: row.getCell('E').value,
-            properties: [],
-          };
+    workbook.eachSheet((worksheet, sheetId) => {
+      worksheet
+        .getRow(1)
+        .eachCell({ includeEmpty: true }, (cell) => (cell.value = cell.text));
+      worksheet.eachRow(
+        (row, rowNumber) => {
+          const productId: any = row.getCell("A").value;
+          if (!productData[productId]) {
+            productData[productId] = {
+              productName: row.getCell("A").value,
+              price: row.getCell("B").value,
+              description: row.getCell("C").value,
+              categoryId: row.getCell("D").value,
+              properties: [],
+            };
+          }
+          const imageUrl = row.getCell("E").text;
+          const color = row.getCell("F").value;
+          const size = row.getCell("G").value;
+          const quantity = row.getCell("H").value;
+
+          const propertyIndex = productData[productId].properties.findIndex(
+            (p) => p.color === color
+          );
+
+          if (propertyIndex === -1) {
+            // Màu chưa tồn tại, thêm mới
+            productData[productId].properties.push({
+              color: color,
+              imageUrl: imageUrl,
+              variants: [{ size, quantity }],
+            });
+          } else {
+            // Màu đã tồn tại, thêm kích thước và số lượng mới
+            productData[productId].properties[propertyIndex].variants.push({
+              size,
+              quantity,
+            });
+          }
         }
-
-        const property = {
-          imageUrl: row.getCell('F').text,
-          color: row.getCell('G').value,
-          variants: [
-            {
-              size: row.getCell('H').value,
-              quantity: row.getCell('I').value,
-            },
-          ],
-        };
-
-        productData[productId].properties.push(property);
-      });
+      );
     });
 
     // Chuyển đổi dữ liệu từ object sang array
@@ -570,6 +593,6 @@ export const ImportProductByExcel = async (req: any, res: Response) => {
     res.status(200).json({ message: 'Import completed', data: importProduct });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};

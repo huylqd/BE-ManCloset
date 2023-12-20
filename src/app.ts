@@ -24,6 +24,7 @@ import socket, { Server, Socket } from "socket.io";
 import http from "http";
 import { SocketServer } from "./config/socket.js";
 
+
 //Config express
 const app: any = express();
 dotenv.config();
@@ -60,59 +61,7 @@ app.use("/api", routerPassport);
 app.use("/", UserRouter);
 app.use("/", AnalystRouter);
 app.use("/api/message", messageRouter)
-// Cấu hình Multer để xử lý tệp tải lên
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-// app.post('/upload', upload.single('file'), async (req, res) => {
-//   try {
-//     // Đọc dữ liệu từ tệp Excel và thêm vào MongoDB
-//     const workbook = new ExcelJS.Workbook();
-//     await workbook.xlsx.load(req.file.buffer);
 
-//     const productData = {};
-
-//     workbook.eachSheet((worksheet, sheetId) => {
-//       worksheet.getRow(1).eachCell({ includeEmpty: true }, cell => cell.value = cell.text);
-//       worksheet.eachRow({min:2,max:worksheet.actualRowCount},(row, rowNumber) => {
-//         const productId = row.getCell('A').value;
-//         if (!productData[productId]) {
-//           productData[productId] = {
-//             productName: row.getCell('A').value,
-//             price: row.getCell('B').value,
-//             description: row.getCell('C').value,
-//             categoryId: row.getCell('D').value,
-//             discount: row.getCell('E').value,
-//             properties: [],
-//           };
-//         }
-
-//         const property = {
-//           imageUrl: row.getCell('F').text,
-//           color: row.getCell('G').value,
-//           variants: [
-//             {
-//               size: row.getCell('H').value,
-//               quantity: row.getCell('I').value,
-//             },
-//           ],
-//         };
-
-//         productData[productId].properties.push(property);
-//       });
-//     });
-
-//     // Chuyển đổi dữ liệu từ object sang array
-//     const productsArray = Object.values(productData);
-
-//     // Thêm dữ liệu vào MongoDB
-//     await product.insertMany(productsArray);
-
-//     res.status(200).json({ message: 'Import completed' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
 
 isCheckedSale();
 //Connect DB
@@ -133,10 +82,6 @@ db.on("error", (error) => {
   console.error("MongoDB connection error:", error);
 });
 
-// const server = app.listen(port, () => {
-//   console.log(`App is running at the ${port}`);
-// });
-
 const server = http.createServer(app);
 export const io = new Server(server, {
   cors: {
@@ -144,22 +89,6 @@ export const io = new Server(server, {
   }
 });
 
-var onlineUsers = new Map();
-
-// io.on('connection', (socket) => {
-//   global.chatSocket = socket;
-
-//   socket.on("addUser", (userId) => {
-//     onlineUsers.set(userId, socket.id)
-//   })
-
-//   socket.on('sendMsg', (data) => {
-//     const sendUserSocket = onlineUsers.get(data.to);
-//     if(sendUserSocket) {
-//       socket.to(sendUserSocket).emit('msg-recieve', data.msg)
-//     }
-//   })
-// })
 
 io.on("connection", (socket: Socket) => SocketServer(socket))
 
