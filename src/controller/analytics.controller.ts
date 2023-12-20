@@ -61,26 +61,47 @@ export const productSold = async (req: Request, res: Response) => {
         },
       },
       {
-        $unwind: "$items", // Mở rộng mảng 'items' thành các bản ghi riêng lẻ
+        $unwind: "$items",
       },
       {
         $group: {
-          _id: "$items.product_id", // Nhóm theo product_id
-          totalQuantitySold: { $sum: "$items.property.quantity" }, // Tính tổng số lượng đã bán
+          _id: "$items.product_id",
+          totalQuantitySold: { $sum: "$items.property.quantity" },
           totalAmountSold: { $sum: "$items.sub_total" },
         },
       },
       {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      {
+        $unwind: "$productDetails",
+      },
+      {
+        $unwind: {
+          path: "$productDetails.properties",
+          preserveNullAndEmptyArrays: true,
+        },
+      },{
+        $limit:5
+      },
+      {
         $project: {
-          _id: 0, // Loại bỏ trường _id
-          product_id: "$_id", // Đặt lại tên trường product_id
-          totalQuantitySold: 1, // Giữ lại trường totalQuantitySold
+          _id: 0,
+          product_id: "$_id",
+          totalQuantitySold: 1,
           totalAmountSold: 1,
+          productName: "$productDetails.productName",
+          productImage: "$productDetails.properties.imageUrl",
         },
       },
       {
         $sort: {
-          totalQuantitySold: -1, // Sắp xếp theo số lượng giảm dần
+          totalQuantitySold: -1,
         },
       },
     ]).exec();

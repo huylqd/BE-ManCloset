@@ -15,6 +15,7 @@ import {
   getProductDeletedById,
   getInventoryOfProduct,
   ImportProductByExcel,
+  queryProductByCateId,
   
 } from "../controller/productController";
 import { uploadImage } from "../config/cloudinary";
@@ -24,7 +25,7 @@ const router: Router = express.Router();
 // Lấy tất cả sản phẩm, lấy theo id, lấy theo cateId
 router.get("/products",getAllProduct);
 router.get("/products/:id", getProductById);
-router.get("/products/cate/:categoryId", getProductByCategoryId);
+router.get("/products/cate/filter", queryProductByCateId);
 
 // Thêm , update, xóa sản phẩm
 router.post("/products", (req, res, next) => { checkPermission(req, res, next, 'admin') }, uploadImage.array("images",5) ,createProduct);

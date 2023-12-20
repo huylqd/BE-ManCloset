@@ -101,7 +101,7 @@ export const getBills = async (req: Request, res: Response) => {
       .skip(+options.page * +options.limit)
       .limit(+options.limit)
 
-    const results = dataQuery(totalBill, +options.limit, +options.page);
+    const results = dataQuery(totalBill, +options.limit, +options.page, totalBill.length);
 
     if (bills.length === 0) {
       return res.status(200).json({
@@ -217,7 +217,7 @@ export const getUserOrdersHistory = async (req: Request, res: Response) => {
       .skip(+options.limit * +options.page)
       .limit(options.limit as number);
 
-    const results = dataQuery(userOrdersHistoryAll, +options.limit, +options.page);
+    const results = dataQuery(userOrdersHistoryAll, +options.limit, +options.page, userOrdersHistoryAll.length);
 
     if (userOrdersHistory.length === 0) {
       return res.status(200).json({

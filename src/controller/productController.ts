@@ -7,7 +7,9 @@ import cloudinary from "../config/cloudinary";
 import { checkInteger } from "../utils/checkNumber";
 import { dataQuery, dataQueryPaginate } from "../utils/dataQuery";
 import product from "../model/product";
+import { SortOrder } from "mongoose";
 const ExcelJS = require("exceljs");
+
 export const getAllProduct = async (req: any, res: any) => {
   const {
     _page = 1,
@@ -23,7 +25,6 @@ export const getAllProduct = async (req: any, res: any) => {
   };
   try {
     const result = await Product.paginate({}, options);
-    // console.log(result);
     if (result.docs.length === 0) throw new Error("No products found");
     const response: IProductResponse = {
       data: result.docs,
@@ -38,6 +39,7 @@ export const getAllProduct = async (req: any, res: any) => {
     return res.status(400).json({ message: error.message });
   }
 };
+
 export const getProductById = async (req: Request, res: Response) => {
   try {
     const product = await Product.findOne({ _id: req.params.id });
@@ -506,6 +508,44 @@ export const getProductByCategoryId = async (req: any, res: Response) => {
         totalItem: product.totalDocs,
         sizePerPage: product.limit,
       },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const queryProductByCateId = async (req: Request, res: Response) => {
+  try {
+    const query = req.query;
+    const options = {
+      page: query.page ? +query.page - 1 : 0,
+      limit: query.limit ? +query.limit : 8,
+      sort: query.sort ? query.sort : "createdAt",
+      order: query.order ? query.order : "asc",
+    };
+
+    const categoryId = query.categoryId;
+
+    const products = await Product.find(
+      categoryId ? { categoryId: categoryId } : {}
+    )
+      .sort({ [options.sort as string]: options.order as SortOrder })
+      .skip(+options.limit * +options.page)
+      .limit(options.limit as number);
+
+    if (!products) {
+      return res.status(200).json({
+        message: "Không có sản phẩm nào",
+      });
+    }
+
+    const productLength = await Product.find(categoryId ? { categoryId: categoryId } : {}).count()
+
+    const results = dataQuery(products, +options.limit, +options.page, productLength);
+
+    return res.status(200).json({
+      message: "Lấy sản phẩm thành công",
+      result: results,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
