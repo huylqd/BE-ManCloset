@@ -18,10 +18,6 @@ passport.use(new GoogleStrategy({
             googleId: profile.id,
             authType: "google"
         })
-        if (isExitUser.isBlocked) {
-            return done(null, false, { message: "Tài khoản tạm thời bị khóa" });
-        }
-        
         if (isExitUser) {
             const token = jwt.sign({ _id: isExitUser._id }, ACCESSTOKEN_SECRET, { expiresIn: "2h" });
             const refreshToken = jwt.sign({ _id: isExitUser._id }, REFESHTOKEN_SECRET, { expiresIn: "4h" })

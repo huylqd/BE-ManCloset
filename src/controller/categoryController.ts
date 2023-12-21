@@ -168,15 +168,19 @@ export const removeCategory = async (req: any, res: any) => {
   try {
     res.setHeader("Content-Type", "application/json");
     const { id } = req.params;
-    const productsToUpdate = await Product.find({ categoryId: id })
-    const newCategoryId = '65781e8b3d0129ac4e8355bd';
-    let newCategory:any = await Category.findById(newCategoryId);
-    await Promise.all(productsToUpdate.map(async (product: any) => {
-      newCategory.products.push(product._id)
+    const productsToUpdate = await Product.find({categoryId:id})
+    const newCategoryId = '658334e2cdced64d5bb0a07b';
+    let newCategory = await Category.findById(newCategoryId);
+     await Promise.all(productsToUpdate.map(async (product:any) => {
+        newCategory.products.push(product._id)
+        await Product.findOneAndUpdate({_id:product._id},{categoryId:newCategoryId},{new:true})
     }));
-    const removedCategory = await Category.deleteOne({ _id: id });
-    console.log(removedCategory);
-    await newCategory.save();
+  
+     
+    
+      const removedCategory = await Category.deleteOne({_id:id});
+      console.log(removedCategory);
+      await newCategory.save();
     res.status(200).json({
       message: "Category remove successfully",
       data: removedCategory,
@@ -214,32 +218,34 @@ export const getAllDeleteCategory = async (req, res) => {
   }
 };
 
-export const remove = async (req, res) => {
+export const remove = async (req,res) => {
   try {
+    res.setHeader("Content-Type", "application/json");
     const id = req.params.id
     const category = await Category.findById(id)
-
-    if (!category) {
+  console.log(category);
+  
+    if(!category) {
       return res.status(400).json({
         message: "Không tìm thấy danh mục",
-      })
+    })
     }
-    if (category.name === "Khác") {
+    if(category.name == "khác"){
       return res.status(404).json({
         message: "Danh mục này không được xóa",
-      })``
+    })
     }
     if (category) {
       await (category as any).delete()
-    }
+  }
     return res.status(200).json({
       message: "Xoá danh mục thành công chuyển sang thùng rác",
-      data: category
-    })
+      data:category
+  })
   } catch (error) {
     return res.status(500).json({
       message: error,
-    })
+  })
   }
 }
 export const restoreCategory = async (req, res) => {
